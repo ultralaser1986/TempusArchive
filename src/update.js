@@ -1,4 +1,5 @@
 let fs = require("fs")
+let ph = require("path")
 let dp = require("despair")
 
 let base = 'https://tempus.xyz/api'
@@ -33,4 +34,4 @@ async function updateRecordsFile(file) {
     fs.writeFileSync(file, JSON.stringify(RECORDS))
 }
 
-updateRecordsFile('data/records.json')
+updateRecordsFile(ph.resolve(__dirname, 'data', 'records.json'))
