@@ -1,8 +1,8 @@
-let YouTube = require("./youtube")
+let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
 
-let records = require("./data/records")
-let uploads = require("./data/uploads")
+let records = require('./data/records')
+let uploads = require('./data/uploads')
 
 /*
 yt.uploadVideo("C:/Users/pear/Desktop/cat.mp4", {

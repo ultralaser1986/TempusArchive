@@ -7,8 +7,6 @@ let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 let CHUNK_SIZE = 256000
 
-
-
 function genUploadId () {
   let a = Array(36)
   for (let b = 0, c, d = 0; d < a.length; d++) {
@@ -44,7 +42,7 @@ function YouTube (keyfile) {
   let keys = JSON.parse(fs.readFileSync(ph.resolve(__dirname, keyfile)))
 
   this.keys = {
-    cookies: `CONSENT=YES+cb;${Object.entries(keys.cookies).map(x => x.join("=")).join(";")};`,
+    cookies: `CONSENT=YES+cb;${Object.entries(keys.cookies).map(x => x.join('=')).join(';')};`,
     authorization: `SAPISIDHASH ${getSAPSIDHASH(keys.cookies.SAPISID)}`,
     session: keys.sessionInfo
   }
