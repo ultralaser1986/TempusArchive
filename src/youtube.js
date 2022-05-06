@@ -153,4 +153,39 @@ YouTube.prototype.sendVideoBinary = async function (video) {
   })
 }
 
+YouTube.prototype.listVideos = async function (next) {
+  let body = await dp.post('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos', {
+    query: {
+      alt: 'json',
+      key: INNERTUBE_KEY
+    },
+    headers: {
+      'x-origin': 'https://studio.youtube.com',
+      cookie: this.keys.cookies,
+      Authorization: this.keys.authorization
+    },
+    data: {
+      pageSize: 100,
+      context: {
+        client: { clientName: 62, clientVersion: '1.11111111' }
+      },
+      mask: {
+        title: true,
+        description: true,
+        privacy: true
+      },
+      pageToken: next
+    },
+    type: 'json'
+  }).json()
+  return {
+    next: body.nextPageToken,
+    items: body.videos.map(x => {
+      delete x.responseStatus
+      delete x.loggingDirectives
+      return x
+    })
+  }
+}
+
 module.exports = YouTube
