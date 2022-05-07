@@ -26,10 +26,10 @@ async function updateRecordsFile (file) {
       for (let zone of ZONES) {
         for (let i = 0; i < map.zone_counts[zone]; i++) {
           let rec = await TempusAPI.getRecords(map.map_info.id, zone, i + 1, 1)
-          let s = rec.results.soldier[0]?.id
-          let d = rec.results.demoman[0]?.id
-          if(s) RECORDS.push(`S_${rec.zone_info.id} ${s}`)
-          if(d) RECORDS.push(`D_${rec.zone_info.id} ${d}`)
+          let s = rec.results.soldier[0]
+          let d = rec.results.demoman[0]
+          if(s) RECORDS.push(`S_${rec.zone_info.id} ${s.id} ${s.demo_info?.url ? '' : 'X'}`.trim())
+          if(d) RECORDS.push(`D_${rec.zone_info.id} ${d.id} ${d.demo_info?.url ? '' : 'X'}`.trim())
         }
       }
     }
