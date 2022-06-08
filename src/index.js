@@ -1,8 +1,10 @@
+let ListStore = require('./liststore')
+let Tempus = require('./tempus')
 let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
 
-let records = require('./data/records')
-let uploads = require('./data/uploads')
+let records = new ListStore('./data/records.list')
+let uploads = new ListStore('./data/uploads.list')
 
 /*
 yt.uploadVideo("C:/Users/pear/Desktop/cat.mp4", {
