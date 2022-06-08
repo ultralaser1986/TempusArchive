@@ -1,31 +1,21 @@
 let fs = require('fs')
 let ph = require('path')
-let dp = require('despair')
 
 let YouTube = require('./youtube')
+let Tempus = require('./tempus')
 let yt = new YouTube('./data/keys.json')
 
-let base = 'https://tempus.xyz/api'
 let MAX_MAPS = 800
 let ZONES = ['bonus', 'trick']
-
-let TempusAPI = {
-  async getMap (id) {
-    return await dp(base + `/maps/id/${id}/fullOverview`).json().catch(() => null)
-  },
-  async getRecords (id, zone, index, limit = 1) {
-    return await dp(base + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
-  }
-}
 
 async function updateRecordsFile (file) {
   let RECORDS = []
   for (let i = 0; i < MAX_MAPS; i++) {
-    let map = await TempusAPI.getMap(i)
+    let map = await Tempus.getMap(i)
     if (map) {
       for (let zone of ZONES) {
         for (let i = 0; i < map.zone_counts[zone]; i++) {
-          let rec = await TempusAPI.getRecords(map.map_info.id, zone, i + 1, 1)
+          let rec = await Tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
           let s = rec.results.soldier[0]
           let d = rec.results.demoman[0]
           if(s) RECORDS.push(`S_${rec.zone_info.id} ${s.id} ${s.demo_info?.url ? '' : 'X'}`.trim())
@@ -58,7 +48,7 @@ async function updateUploadsFile (file) {
 }
 
 async function main() {
-  //await updateRecordsFile(ph.resolve(__dirname, 'data', 'records.list'))
+  await updateRecordsFile(ph.resolve(__dirname, 'data', 'records.list'))
   await updateUploadsFile(ph.resolve(__dirname, 'data', 'uploads.list'))
 }
 main()
