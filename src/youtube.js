@@ -172,7 +172,8 @@ YouTube.prototype.listVideos = async function (next) {
       mask: {
         title: true,
         description: true,
-        privacy: true
+        privacy: true,
+        timeCreatedSeconds: true
       },
       pageToken: next
     },
@@ -181,8 +182,10 @@ YouTube.prototype.listVideos = async function (next) {
   return {
     next: body.nextPageToken,
     items: body.videos.map(x => {
+      x.date = Number(x.timeCreatedSeconds)
       delete x.responseStatus
       delete x.loggingDirectives
+      delete x.timeCreatedSeconds
       return x
     })
   }
