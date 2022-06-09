@@ -1,10 +1,9 @@
-let fs = require('fs')
 let ph = require('path')
 
 let ListStore = require('./liststore')
-let Tempus = require('./tempus')
 let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
+let tempus = require('./tempus')
 
 let MAX_MAPS = 800
 let ZONES = ['bonus', 'trick']
@@ -12,11 +11,11 @@ let ZONES = ['bonus', 'trick']
 async function updateRecordsFile (file) {
   let RECORDS = new ListStore()
   for (let i = 0; i < MAX_MAPS; i++) {
-    let map = await Tempus.getMap(i)
+    let map = await tempus.getMap(i)
     if (map) {
       for (let zone of ZONES) {
         for (let i = 0; i < map.zone_counts[zone]; i++) {
-          let rec = await Tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
+          let rec = await tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
           let s = rec.results.soldier[0]
           let d = rec.results.demoman[0]
           if (s) RECORDS.add(`S_${rec.zone_info.id}`, [s.id, s.demo_info?.url ? '' : 'X'])

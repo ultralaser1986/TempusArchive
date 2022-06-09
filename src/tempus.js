@@ -1,4 +1,3 @@
-
 let dp = require('despair')
 
 let base = 'https://tempus.xyz/api'
