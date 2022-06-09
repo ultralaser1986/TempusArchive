@@ -64,6 +64,27 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}) {
   return res.videoId
 }
 
+YouTube.prototype.setVideoPrivacy = async function (vid, privacy) {
+  try {
+    await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
+      query: {
+        alt: 'json',
+        key: INNERTUBE_KEY
+      },
+      headers: {
+        'x-origin': 'https://studio.youtube.com',
+        cookie: this.keys.cookies,
+        Authorization: this.keys.authorization
+      },
+      data: {
+        encryptedVideoId: vid,
+        privacyState: { newPrivacy: privacy }
+      }
+    })
+  } catch (e) { return false }
+  return true
+}
+
 YouTube.prototype.describeFile = async function (video) {
   let { headers } = await dp.post('https://upload.youtube.com/upload/studio', {
     headers: {
