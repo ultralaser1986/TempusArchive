@@ -10,7 +10,7 @@ let tempus = require('./tempus')
 let util = require('./util')
 
 let TFCLASS = { 3: 'S', 4: 'D' }
-let CFG = { padding: 300, output: 'src/output' }
+let CFG = { padding: 200, output: 'src/output' }
 let META = { tags: ['tf2', 'jump', 'team fortress 2', 'rocket jumping', 'sticky jumping', 'tempus network', 'soldier', 'demoman'], category: 20 }
 
 async function renderAndUpload (zone, id) {
