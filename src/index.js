@@ -1,7 +1,7 @@
 let ListStore = require('./liststore')
-let Tempus = require('./tempus')
 let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
+let tempus = require('./tempus')
 
 let records = new ListStore('./data/records.list')
 let uploads = new ListStore('./data/uploads.list')
