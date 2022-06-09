@@ -3,6 +3,8 @@ let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
 let tempus = require('./tempus')
 
+ListStore.setValueSwaps([undefined, true], ['X', false])
+
 let records = new ListStore('./data/records.list')
 let uploads = new ListStore('./data/uploads.list')
 

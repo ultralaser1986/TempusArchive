@@ -5,6 +5,8 @@ let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
 let tempus = require('./tempus')
 
+ListStore.setValueSwaps([undefined, true], ['X', false])
+
 let MAX_MAPS = 800
 let ZONES = ['bonus', 'trick']
 
@@ -18,8 +20,8 @@ async function updateRecordsFile (file) {
           let rec = await tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
           let s = rec.results.soldier[0]
           let d = rec.results.demoman[0]
-          if (s) RECORDS.add(`S_${rec.zone_info.id}`, [s.id, s.demo_info?.url ? '' : 'X'])
-          if (d) RECORDS.add(`D_${rec.zone_info.id}`, [d.id, d.demo_info?.url ? '' : 'X'])
+          if (s) RECORDS.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
+          if (d) RECORDS.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
         }
       }
     }
@@ -38,7 +40,7 @@ async function updateUploadsFile (file) {
       let tfclass = item.title.match(/^\[(\w)\]/)[1]
       let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/).map(x => Number(x))
 
-      UPLOADS.add(`${tfclass}_${zone}`, [record, item.videoId])
+      UPLOADS.add(`${tfclass}_${zone}`, record, item.videoId)
     }
 
     if (res.next) await loopVids(next)

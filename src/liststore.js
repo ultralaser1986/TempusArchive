@@ -8,22 +8,54 @@ function ListStore (path) {
       line = line.trim()
       if (line) {
         let parts = line.split(' ')
-        this[parts[0]] = parts.slice(1)
+        this.add([parts.shift()], ...parts)
       }
     }
   }
 }
 
-ListStore.prototype.add = function (key, items) {
-  if (!this[key]) this[key] = []
-  if (!Array.isArray(items)) items = [items]
-  this[key].push(...items.filter(x => x))
+ListStore.setValueSwaps = function (...args) {
+  this.valueSwap = value => {
+    for (let a of args) {
+      if (value === a[0]) value = a[1]
+      else if (value === a[1]) value = a[0]
+    }
+    return value
+  }
 }
 
-ListStore.prototype.export = function (path) {
-  let out = []
-  for (let key in this) out.push(`${key} ${this[key].join(' ')}`)
-  fs.writeFileSync(path, out.join('\n'))
-}
+Object.defineProperties(ListStore.prototype, {
+  add: {
+    value: function (key, ...args) {
+      let swap = false
+      if (Array.isArray(key)) {
+        key = key[0]
+        swap = true
+      }
+      if (!this[key]) this[key] = {}
+      for (let i = 0; i < args.length; i++) {
+        let prop = args[i]
+        let value = args[++i]
+        if (ListStore.valueSwap && swap) value = ListStore.valueSwap(value)
+        this[key][prop] = value
+      }
+    }
+  },
+  export: {
+    value: function (path) {
+      let out = []
+      for (let key in this) {
+        let line = [key]
+        for (let prop in this[key]) {
+          let value = this[key][prop]
+          if (ListStore.valueSwap) value = ListStore.valueSwap(value)
+          line.push(prop, value)
+        }
+        out.push(line.join(' '))
+      }
+      fs.writeFileSync(path, out.join('\n'))
+    }
+  }
+})
 
 module.exports = ListStore
