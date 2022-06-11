@@ -167,13 +167,11 @@ YouTube.prototype.sendVideoBinary = async function (video) {
         })
         n++
         stream.resume()
-      } catch (err) {
-        console.log(err)
-        throw Error('A')
-      }
+      } catch (err) { reject(err) }
     })
 
-    stream.on('close', () => resolve())
+    stream.on('close', resolve)
+    stream.on('error', reject)
   })
 }
 
