@@ -71,12 +71,12 @@ async function main () {
     let file = await tr.record(id, { padding: cfg.padding, output: cfg.output })
     let vid = await upload(rec, file)
 
+    uploads.add(rec.zone, id, vid)
+    uploads.export()
+
     console.log('https://youtu.be/' + vid)
 
     util.remove(file)
-
-    uploads.add(rec.zone, id, vid)
-    uploads.export()
   }
 
   await tr.exit()

@@ -78,11 +78,14 @@ YouTube.prototype.setVideoPrivacy = async function (vid, privacy) {
       },
       data: {
         encryptedVideoId: vid,
-        privacyState: { newPrivacy: privacy }
+        privacyState: { newPrivacy: privacy },
+        context: {
+          client: { clientName: 62, clientVersion: '1.11111111' },
+          request: { sessionInfo: { token: this.keys.session } }
+        }
       }
     })
-  } catch (e) { return false }
-  return true
+  } catch (e) { throw Error(e) }
 }
 
 YouTube.prototype.describeFile = async function (video) {
