@@ -5,7 +5,7 @@ let crypto = require('crypto')
 
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
-let CHUNK_SIZE = 262144
+let CHUNK_SIZE = 262144 * 20
 
 function genUploadId () {
   let a = Array(36)
@@ -167,10 +167,10 @@ YouTube.prototype.sendVideoBinary = async function (video) {
         })
         n++
         stream.resume()
+        if (IS_LAST_CHUNK) resolve()
       } catch (err) { reject(err) }
     })
 
-    stream.on('close', resolve)
     stream.on('error', reject)
   })
 }
