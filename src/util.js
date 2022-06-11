@@ -1,3 +1,5 @@
+let fs = require('fs')
+
 module.exports = {
   formatTime (ms, decimals = 3) {
     if (!ms) return null
@@ -17,5 +19,8 @@ module.exports = {
   maxLen (str, len) {
     if (str.length > len) str = str.slice(0, len - 3) + '...'
     return str
+  },
+  remove (file) {
+    if (fs.existsSync(file)) fs.unlinkSync(file)
   }
 }

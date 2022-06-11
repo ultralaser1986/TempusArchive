@@ -3,6 +3,7 @@ let ph = require('path')
 
 function ListStore (path) {
   if (path) {
+    this.path = path
     let file = fs.readFileSync(ph.resolve(__dirname, path), 'utf-8')
     for (let line of file.split(/\r?\n/)) {
       line = line.trim()
@@ -25,6 +26,7 @@ ListStore.setValueSwaps = function (...args) {
 }
 
 Object.defineProperties(ListStore.prototype, {
+  path: { value: null },
   add: {
     value: function (key, ...args) {
       let swap = false
@@ -43,6 +45,7 @@ Object.defineProperties(ListStore.prototype, {
   },
   export: {
     value: function (path) {
+      if (!path) path = this.path
       let out = []
       for (let key in this) {
         let line = [key]

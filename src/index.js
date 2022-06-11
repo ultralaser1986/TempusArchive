@@ -1,24 +1,17 @@
-let fs = require('fs')
-let ph = require('path')
-
+let cfg = require('./config.json')
+let util = require('./util')
 let ListStore = require('./liststore')
 let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
 let TemRec = require('temrec')
 let tr = new TemRec('./config.ini')
 let tempus = require('./tempus')
-let util = require('./util')
 
-let TFCLASS = { 3: 'S', 4: 'D' }
-let CFG = { padding: 200, output: 'src/output' }
-let META = { tags: ['tf2', 'jump', 'team fortress 2', 'rocket jumping', 'sticky jumping', 'tempus network', 'soldier', 'demoman'], category: 20 }
-
-async function renderAndUpload (zone, id) {
-  let override = uploads[zone]
+async function upload (rec, file) {
+  let override = uploads[rec.zone]
   if (override) override = Object.values(override)[0] // assuming the first key is the latest record
-  let rec = await tempus.getRecord(id)
 
-  let tfclass = TFCLASS[rec.record_info.class]
+  let tfclass = cfg.class[rec.record_info.class]
   let nick = (await tempus.formatNickname(rec.player_info.steamid)) || rec.player_info.name
   let map = rec.demo_info.mapname
 
@@ -33,26 +26,18 @@ async function renderAndUpload (zone, id) {
   if (custom) title += ` (${util.maxLen(custom, 30)})`
   title += ` - ${time}`
 
-  let desc = `https://tempus.xyz/records/${id}/${rec.zone_info.id}`
+  let desc = `https://tempus.xyz/records/${rec.record_info.id}/${rec.zone_info.id}`
   if (override) desc += `\n\nPrevious WR: https://youtu.be/${override}`
-
-  let file = ph.resolve(CFG.output, id + '.mp4')
-
-  await tr.record([id], CFG)
 
   let vid = await yt.uploadVideo(file, {
     title,
     description: desc,
-    visibility: 'unlisted',
-    ...META
+    visibility: 'unlisted', // change to PUBLIC on release
+    category: cfg.meta.category,
+    tags: [...cfg.meta.tags, `https://tempus.xyz/records/${rec.record_info.id}`]
   })
 
   if (override) await yt.setVideoPrivacy(override, 'UNLISTED')
-
-  console.log('https://youtu.be/' + vid)
-
-  await new Promise(resolve => setTimeout(resolve, 3000))
-  if (fs.existsSync(file)) fs.unlinkSync(file)
 
   return vid
 }
@@ -62,28 +47,36 @@ ListStore.setValueSwaps([undefined, true], ['X', false])
 let records = new ListStore('./data/records.list')
 let uploads = new ListStore('./data/uploads.list')
 
-let pending = {}
+let pending = []
 
 for (let zone in records) {
   let record = records[zone]
   for (let id in record) {
     if (!record[id]) break // skip if demo not available
     if (uploads[zone]?.[id]) break // skip if record already uploaded
-    pending[zone] = id
+    pending.push(id)
   }
 }
 
 async function main () {
   await tr.launch()
 
-  let total = Object.keys(pending).length
-  let i = 1
+  for (let i = 0; i < pending.length; i++) {
+    console.log(`${i + 1}/${pending.length}`)
 
-  for (let zone in pending) {
-    console.log(`${i++}/${total}`)
-    let id = pending[zone]
-    let vid = await renderAndUpload(zone, id)
-    uploads.add(zone, id, vid)
+    let id = pending[i]
+    let rec = await tempus.getRecord(id)
+    rec.zone = `${cfg.class(rec.record_info.class)}_${rec.record_info.zone_id}`
+
+    let file = await tr.record(id, { padding: cfg.padding, output: cfg.output })
+    let vid = await upload(rec, file)
+
+    console.log('https://youtu.be/' + vid)
+
+    util.remove(file)
+
+    uploads.add(rec.zone, id, vid)
+    uploads.export()
   }
 
   await tr.exit()
@@ -91,10 +84,6 @@ async function main () {
 
 main()
 
-function kill () {
-  uploads.export(ph.resolve(__dirname, 'data', 'uploads.list'))
-  try { tr.exit() } catch (e) {}
-}
-
+let kill = () => { try { tr.exit() } catch (e) {} }
 process.on('SIGINT', kill)
 process.on('exit', kill)
