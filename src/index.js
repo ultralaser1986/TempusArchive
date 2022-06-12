@@ -9,7 +9,7 @@ let tempus = require('./tempus')
 
 async function upload (rec, file) {
   let override = uploads[rec.zone]
-  if (override) override = Object.values(override)[0] // assuming the first key is the latest record
+  if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
 
   let tfclass = cfg.class[rec.record_info.class]
   let nick = (await tempus.formatNickname(rec.player_info.steamid)) || rec.player_info.name
