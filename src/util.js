@@ -17,7 +17,7 @@ module.exports = {
     return t.join(':') + (decimals ? ms.substr(ms.indexOf('.'), decimals + 1) : '')
   },
   maxLen (str, len) {
-    if (str.length > len) str = str.slice(0, len - 3) + '...'
+    if (str.length > len) str = str.slice(0, len - 3).trim() + '...'
     return str
   },
   remove (file) {
