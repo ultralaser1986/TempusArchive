@@ -1,5 +1,6 @@
 let ph = require('path')
 
+let cfg = require('./config.json')
 let ListStore = require('./liststore')
 let YouTube = require('./youtube')
 let yt = new YouTube('./data/keys.json')
@@ -7,8 +8,8 @@ let tempus = require('./tempus')
 
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
-let MAX_MAPS = 800
-let ZONES = ['bonus', 'trick']
+let MAX_MAPS = cfg.max_maps
+let ZONES = cfg.zones
 
 async function updateRecordsFile (file) {
   let RECORDS = new ListStore()
