@@ -43,7 +43,7 @@ async function updateUploadsFile (file) {
       UPLOADS.add(`${tfclass}_${zone}`, record, item.videoId)
     }
 
-    if (res.next) await loopVids(next)
+    if (res.next) await loopVids(res.next)
   }
   await loopVids()
 
