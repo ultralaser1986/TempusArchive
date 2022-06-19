@@ -3,6 +3,7 @@
     "zones": ["bonus", "trick"],
     "output": "src/output",
     "padding": 200,
+    "pre": 300,
     "class": { "3": "S", "4": "D" },
     "meta": {
         "category": 20,
