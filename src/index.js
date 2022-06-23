@@ -68,7 +68,7 @@ async function main () {
     let rec = await tempus.getRecord(id)
     rec.zone = `${cfg.class[rec.record_info.class]}_${rec.record_info.zone_id}`
 
-    let file = await tr.record(id, { padding: cfg.padding, output: cfg.output, pre: cfg.pre })
+    let file = await tr.record(id, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
     let vid = await upload(rec, file)
 
     uploads.add(rec.zone, id, vid)
