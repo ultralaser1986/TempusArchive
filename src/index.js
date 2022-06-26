@@ -1,3 +1,4 @@
+process.chdir(require('path').dirname(__dirname))
 let cfg = require('./config.json')
 let util = require('./util')
 let ListStore = require('./liststore')
