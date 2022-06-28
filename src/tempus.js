@@ -18,5 +18,11 @@ module.exports = {
     if (!names) throw Error('Invalid nicknames.json')
     let nick = names.find(x => x.steamId === steamId)
     if (nick) return nick.name || null
+  },
+  async getImprovementFromRecord (rec) {
+    let z = rec.zone_info
+    let c = rec.record_info.class === 3 ? 'soldier' : 'demoman'
+    let map = await this.getMapRecords(z.map_id, z.type, z.zoneindex, 2)
+    return map.results[c].length > 1 ? (map.results[c][1].duration - map.results[c][0].duration) : 0
   }
 }

@@ -1,4 +1,5 @@
 process.chdir(require('path').dirname(__dirname))
+let fs = require('fs')
 let cfg = require('./config.json')
 let util = require('./util')
 let ListStore = require('./liststore')
@@ -59,6 +60,24 @@ for (let zone in records) {
   }
 }
 
+async function generateSubs (rec) {
+  let subs = fs.readFileSync(cfg.subs.in, 'utf-8')
+
+  let pad = cfg.padding / (200 / 3)
+  let time = rec.record_info.duration
+
+  let t = x => new Date(x * 1000).toISOString().slice(11, -2)
+
+  subs = subs
+    .replace('%BOX_TIME%', t(pad + time) + ',' + t(pad + time + 1))
+    .replace('%PRIMARY_TIME%', t(pad + time) + ',' + t(pad + time + 3))
+    .replace('%SECONDARY_TIME%', t(pad + time + 0.05) + ',' + t(pad + time + 3))
+    .replace('%PRIMARY_TEXT%', util.formatTime(time * 1000))
+    .replace('%SECONDARY_TEXT%', rec.improvement ? '-' + util.formatTime(rec.improvement * 1000) : '')
+
+  fs.writeFileSync(cfg.subs.out, subs)
+}
+
 async function main () {
   await tr.launch()
 
@@ -68,6 +87,9 @@ async function main () {
     let id = pending[i]
     let rec = await tempus.getRecord(id)
     rec.zone = `${cfg.class[rec.record_info.class]}_${rec.record_info.zone_id}`
+    rec.improvement = await tempus.getImprovementFromRecord(rec)
+
+    await generateSubs(rec)
 
     let file = await tr.record(id, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
     let vid = await upload(rec, file)
@@ -77,7 +99,7 @@ async function main () {
 
     console.log('https://youtu.be/' + vid)
 
-    util.remove(file)
+    util.remove([file, cfg.subs.out])
   }
 
   await tr.exit()

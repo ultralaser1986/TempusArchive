@@ -5,3 +5,4 @@
 keys.json
 *.list
 sound.cache
+*_generated*

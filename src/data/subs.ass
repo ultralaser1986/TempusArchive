@@ -1,0 +1,16 @@
+﻿[Script Info]
+YCbCr Matrix: TV.601
+PlayResX: 1920
+PlayResY: 1080
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Primary,Handgoal,50,&H00FFFFFF,&H000000FF,&H64000000,&H00000000,0,0,0,0,100,100,0,0,1,8,0,5,10,10,10,1
+Style: Secondary,Handgoal,20,&H0000D8FF,&H000000FF,&H64000000,&H00000000,0,0,0,0,100,100,0,0,1,8,0,5,10,10,10,1
+Style: Box,Handgoal,100,&HC800D8FF,&H000000FF,&H00000000,&H00000000,0,0,0,0,1000,1000,0,0,1,0,0,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,%BOX_TIME%,Box,,0,0,0,,{\fad(10,2000)\p1\fscx1953\fscy1928\pos(965.333,1102)}m 0 0 l 100 0 100 100 0 100{\p0}
+Dialogue: 0,%PRIMARY_TIME%,Primary,,0,0,0,,{\be50\fscx400\fscy400\fad(100,0)\t(0,200,0.5,\fscx500\fscy500)\t(200,3000,\fscx550\fscy550)}%PRIMARY_TEXT%
+Dialogue: 0,%SECONDARY_TIME%,Secondary,,0,0,0,,{\be50\fscx400\fscy400\fad(100,0)\t(0,200,0.5,\fscx500\fscy500)\t(200,3000,\fscx550\fscy550)}\N\N\N\N\N\N%SECONDARY_TEXT%
