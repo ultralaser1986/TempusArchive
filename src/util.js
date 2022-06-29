@@ -21,6 +21,7 @@ module.exports = {
     return str
   },
   remove (file) {
-    if (fs.existsSync(file)) fs.unlinkSync(file)
+    if (!Array.isArray(file)) file = [file]
+    for (let f of file) fs.existsSync(f) && fs.unlinkSync(f)
   }
 }
