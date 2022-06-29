@@ -21,8 +21,10 @@ module.exports = {
   },
   async getImprovementFromRecord (rec) {
     let z = rec.zone_info
+    let d = rec.record_info.duration
     let c = rec.record_info.class === 3 ? 'soldier' : 'demoman'
-    let map = await this.getMapRecords(z.map_id, z.type, z.zoneindex, 2)
-    return map.results[c].length > 1 ? (map.results[c][1].duration - map.results[c][0].duration) : 0
+    let m = await this.getMapRecords(z.map_id, z.type, z.zoneindex, 100)
+    let w = m.results[c].slice(1).find(x => x.duration > d)
+    return w ? (w.duration - d) : 0
   }
 }
