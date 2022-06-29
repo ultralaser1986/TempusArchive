@@ -1,4 +1,5 @@
 let fs = require('fs')
+let child = require('child_process')
 
 module.exports = {
   formatTime (ms, decimals = 3) {
@@ -23,5 +24,14 @@ module.exports = {
   remove (file) {
     if (!Array.isArray(file)) file = [file]
     for (let f of file) fs.existsSync(f) && fs.unlinkSync(f)
+  },
+  read (file, encoding) {
+    return fs.readFileSync(file, encoding)
+  },
+  write (file, data) {
+    fs.writeFileSync(file, data)
+  },
+  exec (cmd) {
+    return child.execSync(cmd, { stdio: 'pipe' })
   }
 }

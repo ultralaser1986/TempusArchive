@@ -64,7 +64,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}) {
   return res.videoId
 }
 
-YouTube.prototype.setVideoPrivacy = async function (vid, privacy) {
+YouTube.prototype.updateVideo = async function (vid, data) {
   try {
     await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
       query: {
@@ -78,7 +78,7 @@ YouTube.prototype.setVideoPrivacy = async function (vid, privacy) {
       },
       data: {
         encryptedVideoId: vid,
-        privacyState: { newPrivacy: privacy },
+        ...data,
         context: {
           client: { clientName: 62, clientVersion: '1.11111111' },
           request: { sessionInfo: { token: this.keys.session } }

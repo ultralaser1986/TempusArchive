@@ -1,5 +1,4 @@
 process.chdir(require('path').dirname(__dirname))
-let fs = require('fs')
 let cfg = require('./config.json')
 let util = require('./util')
 let ListStore = require('./liststore')
@@ -34,12 +33,17 @@ async function upload (rec, file) {
   let vid = await yt.uploadVideo(file, {
     title,
     description: desc,
-    visibility: 'unlisted', // change to PUBLIC on release
+    visibility: 'UNLISTED', // change to PUBLIC on release
     category: cfg.meta.category,
     tags: [...cfg.meta.tags, `https://tempus.xyz/records/${rec.record_info.id}`]
   })
 
-  if (override) await yt.setVideoPrivacy(override, 'UNLISTED')
+  await yt.updateVideo(vid, {
+    videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: getThumb64(file, cfg.padding / (200 / 3)) } },
+    gameTitle: { newKgEntityId: cfg.meta.game }
+  })
+
+  if (override) await yt.updateVideo(override, { privacyState: { newPrivacy: 'UNLISTED' } })
 
   return vid
 }
@@ -61,7 +65,7 @@ for (let zone in records) {
 }
 
 async function generateSubs (rec) {
-  let subs = fs.readFileSync(cfg.subs.in, 'utf-8')
+  let subs = util.read(cfg.subs.in, 'utf-8')
 
   let pad = cfg.padding / (200 / 3)
   let time = rec.record_info.duration
@@ -75,7 +79,14 @@ async function generateSubs (rec) {
     .replace('%PRIMARY_TEXT%', util.formatTime(time * 1000))
     .replace('%SECONDARY_TEXT%', rec.improvement ? '-' + util.formatTime(rec.improvement * 1000) : '')
 
-  fs.writeFileSync(cfg.subs.out, subs)
+  util.write(cfg.subs.out, subs)
+}
+
+function getThumb64 (file, seconds) {
+  util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${cfg.thumb}"`)
+  let thumb = 'data:image/png;base64,' + util.read(cfg.thumb, 'base64')
+  util.remove(cfg.thumb)
+  return thumb
 }
 
 async function main () {
@@ -107,6 +118,11 @@ async function main () {
 
 main()
 
-let kill = () => { try { tr.exit() } catch (e) {} }
+let kill = () => {
+  try {
+    util.remove([cfg.subs.out, cfg.thumb])
+    tr.exit()
+  } catch (e) {}
+}
 process.on('SIGINT', kill)
 process.on('exit', kill)
