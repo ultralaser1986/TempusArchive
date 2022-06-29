@@ -77,7 +77,7 @@ async function generateSubs (rec) {
     .replace('%PRIMARY_TIME%', t(pad + time) + ',' + t(pad + time + 3))
     .replace('%SECONDARY_TIME%', t(pad + time + 0.05) + ',' + t(pad + time + 3))
     .replace('%PRIMARY_TEXT%', util.formatTime(time * 1000))
-    .replace('%SECONDARY_TEXT%', rec.improvement ? '-' + util.formatTime(rec.improvement * 1000) : '')
+    .replace('%SECONDARY_TEXT%', rec.improvement ? '-' + util.formatTime(rec.improvement * 1000, rec.improvement < 0.001 ? 4 : 3) : '')
 
   util.write(cfg.subs.out, subs)
 }
