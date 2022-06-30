@@ -1,8 +1,7 @@
 /node_modules
 /src/SVR
 /src/output
-/src/test.js
-keys.json
-*.list
+/src/tmp
+/src/data/keys.json
+/src/data/*.list
 sound.cache
-*_generated*

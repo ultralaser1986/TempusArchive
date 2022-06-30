@@ -1,4 +1,5 @@
 let fs = require('fs')
+let ph = require('path')
 let child = require('child_process')
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
   },
   remove (file) {
     if (!Array.isArray(file)) file = [file]
-    for (let f of file) fs.existsSync(f) && fs.unlinkSync(f)
+    for (let f of file) fs.existsSync(f) && fs.rmSync(f, { force: true, recursive: true })
   },
   read (file, encoding) {
     return fs.readFileSync(file, encoding)
@@ -33,5 +34,14 @@ module.exports = {
   },
   exec (cmd) {
     return child.execSync(cmd, { stdio: 'pipe' })
+  },
+  join (...paths) {
+    return ph.join(...paths)
+  },
+  mkdir (path) {
+    fs.mkdirSync(path)
+  },
+  copy (from, to) {
+    fs.copyFileSync(from, to)
   }
 }

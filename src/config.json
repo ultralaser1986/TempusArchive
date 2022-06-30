@@ -10,9 +10,9 @@
         "category": 20,
         "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman", "tempus network"]
     },
-    "subs": {
-        "in": "src/data/subs.ass",
-        "out": "src/data/subs_generated.ass"
-    },
-    "thumb": "src/data/thumb.png"
+    "tmp": "src/tmp",
+    "endings": "src/data/endings",
+    "thumb": "thumb.png",
+    "subs": "subs.ass",
+    "sfx": "sfx.wav"
 }
