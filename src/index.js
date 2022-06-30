@@ -91,7 +91,9 @@ function thumb (file, seconds) {
   return thumb
 }
 
-async function main () {
+async function main (max) {
+  if (max && max < pending.length) pending.length = max
+
   await tr.launch()
 
   for (let i = 0; i < pending.length; i++) {
@@ -121,7 +123,7 @@ async function main () {
   await tr.exit()
 }
 
-main()
+main(Number(process.argv[2]))
 
 let kill = () => {
   try {
