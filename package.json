@@ -20,6 +20,6 @@
   "dependencies": {
     "demrec": "^3.3.0",
     "despair": "^2.1.2",
-    "temrec": "^1.6.2"
+    "temrec": "^1.7.0"
   }
 }
