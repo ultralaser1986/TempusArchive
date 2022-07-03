@@ -13,15 +13,18 @@ ListStore.setValueSwaps([undefined, true], ['X', false])
 let records = new ListStore('./data/records.list')
 let uploads = new ListStore('./data/uploads.list')
 
-let pending = []
+function merge (records, uploads) {
+  let pending = []
 
-for (let zone in records) {
-  let record = records[zone]
-  for (let id in record) {
-    if (!record[id]) break // skip if demo not available
-    if (uploads[zone]?.[id]) break // skip if record already uploaded
-    pending.push(id)
+  for (let zone in records) {
+    let record = records[zone]
+    for (let id in record) {
+      if (!record[id]) break // skip if demo not available
+      if (uploads[zone]?.[id]) break // skip if record already uploaded
+      pending.push(id)
+    }
   }
+  return pending
 }
 
 async function upload (rec, file) {
