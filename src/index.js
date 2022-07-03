@@ -15,7 +15,6 @@ let uploads = new ListStore('./data/uploads.list')
 
 function merge (records, uploads) {
   let pending = []
-
   for (let zone in records) {
     let record = records[zone]
     for (let id in record) {
@@ -94,8 +93,8 @@ function thumb (file, seconds) {
   return thumb
 }
 
-async function main (max) {
-  if (max && max < pending.length) pending.length = max
+async function main (ids) {
+  let pending = ids.length ? ids : merge(records, uploads)
 
   await tr.launch()
 
@@ -126,7 +125,7 @@ async function main (max) {
   await tr.exit()
 }
 
-main(Number(process.argv[2]))
+main(process.argv.slice(2))
 
 let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'uncaughtException']
 KILLERS.forEach(killer => process.on(killer, () => {
