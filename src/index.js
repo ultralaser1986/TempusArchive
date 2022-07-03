@@ -125,11 +125,10 @@ async function main (max) {
 
 main(Number(process.argv[2]))
 
-let kill = () => {
+let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'uncaughtException']
+KILLERS.forEach(killer => process.on(killer, () => {
   try {
     util.remove(cfg.tmp)
     tr.exit()
   } catch (e) {}
-}
-process.on('SIGINT', kill)
-process.on('exit', kill)
+}))
