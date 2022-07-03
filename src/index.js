@@ -115,7 +115,7 @@ async function main (max) {
     let vid = await upload(rec, file)
     uploads.add(rec.zone, id, vid)
     uploads.export()
-    console.log('https://youtu.be/' + vid)
+    console.log(`[${util.size(file)}]`, 'https://youtu.be/' + vid)
 
     util.remove([file, cfg.tmp])
   }
