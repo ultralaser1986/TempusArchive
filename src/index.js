@@ -126,7 +126,7 @@ async function main (ids) {
 
 main(process.argv.slice(2))
 
-let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'uncaughtException']
+let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
 KILLERS.forEach(killer => process.on(killer, () => {
   try {
     util.remove(cfg.tmp)
