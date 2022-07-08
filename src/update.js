@@ -1,9 +1,9 @@
-let ph = require('path')
+process.chdir(require('path').dirname(__dirname))
 
-let cfg = require('./config.json')
+let cfg = require('../data/config.json')
 let ListStore = require('./liststore')
 let YouTube = require('./youtube')
-let yt = new YouTube('./data/keys.json')
+let yt = new YouTube(cfg.youtube)
 let tempus = require('./tempus')
 
 ListStore.setValueSwaps([undefined, true], ['X', false])
@@ -52,7 +52,7 @@ async function updateUploadsFile (file) {
 }
 
 async function main () {
-  await updateRecordsFile(ph.resolve(__dirname, 'data', 'records.list'))
-  await updateUploadsFile(ph.resolve(__dirname, 'data', 'uploads.list'))
+  await updateRecordsFile(cfg.records)
+  await updateUploadsFile(cfg.uploads)
 }
 main()

@@ -1,17 +1,18 @@
 process.chdir(require('path').dirname(__dirname))
-let cfg = require('./config.json')
+
+let cfg = require('../data/config.json')
 let util = require('./util')
 let ListStore = require('./liststore')
 let YouTube = require('./youtube')
-let yt = new YouTube('./data/keys.json')
+let yt = new YouTube(cfg.youtube)
 let TemRec = require('temrec')
-let tr = new TemRec('./config.ini')
+let tr = new TemRec(cfg.temrec)
 let tempus = require('./tempus')
 
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
-let records = new ListStore('./data/records.list')
-let uploads = new ListStore('./data/uploads.list')
+let records = new ListStore(cfg.records)
+let uploads = new ListStore(cfg.uploads)
 
 function merge (records, uploads) {
   let pending = []

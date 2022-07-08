@@ -39,7 +39,7 @@ function getVideoInfo (file) {
 }
 
 function YouTube (keyfile) {
-  let keys = JSON.parse(fs.readFileSync(ph.resolve(__dirname, keyfile)))
+  let keys = JSON.parse(fs.readFileSync(ph.resolve(keyfile)))
 
   this.keys = {
     cookies: `CONSENT=YES+cb;${Object.entries(keys.cookies).map(x => x.join('=')).join(';')};`,

@@ -4,7 +4,7 @@ let ph = require('path')
 function ListStore (path) {
   if (path) {
     Object.defineProperty(this, 'path', {
-      value: ph.resolve(__dirname, path),
+      value: ph.resolve(path),
       enumerable: false
     })
     let file = fs.readFileSync(this.path, 'utf-8')
