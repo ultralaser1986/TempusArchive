@@ -89,8 +89,7 @@ async function ending (rec, type, out) {
 function thumb (file, seconds) {
   let path = util.join(cfg.tmp, cfg.thumb)
   util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
-  let thumb = 'data:image/png;base64,' + util.read(path, 'base64')
-  return thumb
+  return 'data:image/png;base64,' + util.read(path, 'base64')
 }
 
 async function main (ids) {
