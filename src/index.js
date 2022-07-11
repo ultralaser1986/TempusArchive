@@ -6,7 +6,7 @@ let ListStore = require('./liststore')
 let YouTube = require('./youtube')
 let yt = new YouTube(cfg.youtube)
 let TemRec = require('temrec')
-let tr = new TemRec(cfg.temrec)
+let tr = new TemRec(cfg.temrec, true)
 let tempus = require('./tempus')
 
 ListStore.setValueSwaps([undefined, true], ['X', false])
@@ -104,14 +104,18 @@ async function main (ids) {
     util.mkdir(cfg.tmp)
 
     let id = pending[i]
+
     let rec = await tempus.getRecord(id)
     rec.zone = `${cfg.class[rec.record_info.class]}_${rec.record_info.zone_id}`
     rec.improvement = await tempus.getImprovementFromRecord(rec)
+    let { display } = await TemRec.fetch(rec)
 
     await ending(rec, 'default', cfg.tmp)
 
     // record
-    let file = await tr.record(id, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+    console.log(id + ' << ' + display)
+    let file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+    console.log(id + ' >> ' + file)
 
     // upload
     let vid = await upload(rec, file)
