@@ -131,6 +131,6 @@ let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
 KILLERS.forEach(killer => process.on(killer, () => {
   try {
     util.remove(cfg.tmp)
-    tr.exit()
+    if (tr.app) tr.exit(true)
   } catch (e) {}
 }))
