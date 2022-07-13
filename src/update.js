@@ -33,6 +33,8 @@ async function updateRecordsFile (file) {
 
 async function updateUploadsFile (file) {
   let UPLOADS = new ListStore()
+  let dupes = []
+  let privacies = {}
 
   let loopVids = async next => {
     let res = await yt.listVideos(next)
@@ -41,12 +43,39 @@ async function updateUploadsFile (file) {
       let tfclass = item.title.match(/^\[(\w)\]/)[1]
       let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/).map(x => Number(x))
 
-      UPLOADS.add(`${tfclass}_${zone}`, record, item.videoId)
+      let key = `${tfclass}_${zone}`
+
+      if (UPLOADS[key]?.[record]) dupes.push(item.videoId)
+      else {
+        UPLOADS.add(key, record, item.videoId)
+        privacies[item.videoId] = item.privacy
+      }
     }
 
     if (res.next) await loopVids(res.next)
   }
   await loopVids()
+
+  // verify privacy status for each upload
+  let status = { public: [], unlisted: [] }
+  for (let key in UPLOADS) {
+    let records = UPLOADS[key]
+    let i = Object.keys(records).length
+    for (let record in records) {
+      let vid = records[record]
+      let privacy = privacies[vid]
+
+      if (--i === 0) { // latest record should be public
+        if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.public.push(vid)
+      } else { // rest should be unlisted
+        if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.unlisted.push(vid)
+      }
+    }
+  }
+
+  if (dupes.length) console.log('Duplicate Records:', dupes)
+  if (status.public.length) console.log('Should be PUBLIC:', status.public)
+  if (status.unlisted.length) console.log('Should be UNLISTED:', status.unlisted)
 
   UPLOADS.export(file)
 }
