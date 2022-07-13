@@ -57,8 +57,10 @@ async function upload (rec, file) {
     tags: [...cfg.meta.tags, `https://tempus.xyz/records/${rec.record_info.id}`]
   })
 
+  let thumbnail = thumb(file, (cfg.padding / (200 / 3)) + (rec.record_info.duration / 2))
+
   await yt.updateVideo(vid, {
-    videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumb(file, cfg.padding / (200 / 3)) } },
+    videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
     gameTitle: { newKgEntityId: cfg.meta.game }
   })
 
