@@ -112,11 +112,18 @@ async function main (ids) {
     rec.improvement = await tempus.getImprovementFromRecord(rec)
     let { display } = await TemRec.fetch(rec)
 
-    await ending(rec, 'default', cfg.tmp)
-
     // record
     console.log(id + ' << ' + display)
+
+    if (uploads[rec.zone]?.[id]) {
+      console.log('Already Uploaded:', uploads[rec.zone][id])
+      break
+    }
+
+    await ending(rec, 'default', cfg.tmp)
+
     let file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+
     console.log(id + ' >> ' + file)
 
     // upload
