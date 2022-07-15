@@ -79,10 +79,19 @@ async function ending (rec, type, out) {
 
   let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
+  let primary = util.formatTime(time * 1000)
+  let secondary = rec.improvement ? util.formatTime(rec.improvement * 1000, rec.improvement < 0.001 ? 4 : 3) : ''
+  let [pri, mary] = primary.split('.')
+  let [secon, dary] = secondary.split('.')
+
   subs = subs
     .replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
-    .replaceAll('%PRIMARY%', util.formatTime(time * 1000))
-    .replaceAll('%SECONDARY%', rec.improvement ? '-' + util.formatTime(rec.improvement * 1000, rec.improvement < 0.001 ? 4 : 3) : '')
+    .replaceAll('%PRIMARY%', primary || '')
+    .replaceAll('%PRI%', pri || '')
+    .replaceAll('%MARY%', mary || '')
+    .replaceAll('%SECONDARY%', secondary || '')
+    .replaceAll('%SECON%', secon || '')
+    .replaceAll('%DARY%', dary || '')
 
   util.write(util.join(out, cfg.subs), subs)
 
