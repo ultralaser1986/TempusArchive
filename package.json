@@ -19,6 +19,6 @@
   "homepage": "https://github.com/bakapear/TempusArchive#readme",
   "dependencies": {
     "despair": "^2.1.2",
-    "temrec": "^2.0.6"
+    "temrec": "^2.0.7"
   }
 }
