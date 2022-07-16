@@ -110,7 +110,7 @@ async function main (ids) {
 
     if (uploads[rec.key]?.[id]) {
       console.log('Already Uploaded:', uploads[rec.key][id])
-      break
+      continue
     }
 
     await ending(rec.time, rec.improvement, 'default', cfg.tmp)
