@@ -28,36 +28,21 @@ function merge (records, uploads) {
 }
 
 async function upload (rec, file) {
-  let override = uploads[rec.zone]
+  let override = uploads[rec.key]
   if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
 
-  let tfclass = cfg.class[rec.record_info.class]
-  let nick = (await tempus.formatNickname(rec.player_info.steamid)) || rec.player_info.name
-  let map = rec.demo_info.mapname
-
-  let type = rec.zone_info.type
-  if (type === 'map') type = ''
-  else type = `${type[0].toUpperCase()}${type.slice(1)} ${rec.zone_info.zoneindex}`
-  let custom = rec.zone_info.custom_name
-
-  let time = util.formatTime(rec.record_info.duration * 1000)
-
-  let title = `[${tfclass}] ${nick} on ${map} ${type}`.trim()
-  if (custom) title += ` (${util.maxLen(custom, 30)})`
-  title += ` - ${time}`
-
-  let desc = `https://tempus.xyz/records/${rec.record_info.id}/${rec.zone_info.id}`
+  let desc = `https://tempus.xyz/records/${rec.id}/${rec.zone}`
   if (override) desc += `\n\nPrevious WR: https://youtu.be/${override}`
 
   let vid = await yt.uploadVideo(file, {
-    title,
+    title: rec.display,
     description: desc,
     visibility: 'UNLISTED', // change to PUBLIC on release
     category: cfg.meta.category,
-    tags: [...cfg.meta.tags, `https://tempus.xyz/records/${rec.record_info.id}`]
+    tags: [...cfg.meta.tags, `https://tempus.xyz/records/${rec.id}`]
   })
 
-  let thumbnail = thumb(file, (cfg.padding / (200 / 3)) + (rec.record_info.duration / 2))
+  let thumbnail = thumb(file, (cfg.padding / (200 / 3)) + (rec.time / 2))
 
   await yt.updateVideo(vid, {
     videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
@@ -69,18 +54,17 @@ async function upload (rec, file) {
   return vid
 }
 
-async function ending (rec, type, out) {
+async function ending (time, improvement, type, out) {
   let dir = util.join(cfg.endings, type)
 
   let subs = util.read(util.join(dir, cfg.subs), 'utf-8')
 
   let pad = cfg.padding / (200 / 3)
-  let time = rec.record_info.duration
 
   let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
   let primary = util.formatTime(time * 1000)
-  let secondary = rec.improvement ? util.formatTime(rec.improvement * 1000, rec.improvement < 0.001 ? 4 : 3) : ''
+  let secondary = improvement ? util.formatTime(improvement * 1000, improvement < 0.001 ? 4 : 3) : ''
   let [pri, mary] = primary.split('.')
   let [secon, dary] = secondary.split('.')
 
@@ -116,20 +100,20 @@ async function main (ids) {
 
     let id = pending[i]
 
-    let rec = await tempus.getRecord(id)
-    rec.zone = `${cfg.class[rec.record_info.class]}_${rec.record_info.zone_id}`
+    let rec = await TemRec.fetch(id)
+    rec.key = `${rec.class}_${rec.zone}`
     rec.improvement = await tempus.getImprovementFromRecord(rec)
-    let { display } = await TemRec.fetch(rec)
+    rec.display = await tempus.formatDisplay(rec)
 
     // record
-    console.log(id + ' << ' + display)
+    console.log(id + ' << ' + rec.display)
 
-    if (uploads[rec.zone]?.[id]) {
-      console.log('Already Uploaded:', uploads[rec.zone][id])
+    if (uploads[rec.key]?.[id]) {
+      console.log('Already Uploaded:', uploads[rec.key][id])
       break
     }
 
-    await ending(rec, 'default', cfg.tmp)
+    await ending(rec.time, rec.improvement, 'default', cfg.tmp)
 
     let file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
 
@@ -137,7 +121,7 @@ async function main (ids) {
 
     // upload
     let vid = await upload(rec, file)
-    uploads.add(rec.zone, id, vid)
+    uploads.add(rec.key, id, vid)
     uploads.export()
     console.log(`[${util.size(file)}]`, 'https://youtu.be/' + vid)
 

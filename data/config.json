@@ -13,7 +13,6 @@
     "zones": ["bonus", "trick"],
     "padding": 200,
     "pre": 300,
-    "class": { "3": "S", "4": "D" },
     "meta": {
         "game": "/m/060phy",
         "category": 20,
