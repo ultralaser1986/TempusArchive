@@ -106,10 +106,10 @@ async function main (ids) {
     rec.display = await tempus.formatDisplay(rec)
 
     // record
-    console.log(id + ' << ' + rec.display)
+    console.log(id, '<<', rec.display)
 
     if (uploads[rec.key]?.[id]) {
-      console.log('Already Uploaded:', uploads[rec.key][id])
+      console.log(id, '>>', 'Already Uploaded:', uploads[rec.key][id])
       continue
     }
 
@@ -117,7 +117,7 @@ async function main (ids) {
 
     let file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
 
-    console.log(id + ' >> ' + file)
+    console.log(id, '>>', file)
 
     // upload
     let vid = await upload(rec, file)
