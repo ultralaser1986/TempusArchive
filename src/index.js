@@ -110,7 +110,7 @@ async function main (ids) {
 
     if (uploads[rec.key]?.[id]) {
       console.log(id, '>>', 'Already Uploaded:', uploads[rec.key][id])
-      // continue
+      continue
     }
 
     await ending(rec.time, rec.improvement, 'default', cfg.tmp)
@@ -121,8 +121,8 @@ async function main (ids) {
 
     // upload
     let vid = await upload(rec, file)
-    // uploads.add(rec.key, id, vid)
-    // uploads.export()
+    uploads.add(rec.key, id, vid)
+    uploads.export()
     console.log(`[${util.size(file)}]`, 'https://youtu.be/' + vid)
 
     util.remove([file, cfg.tmp])
