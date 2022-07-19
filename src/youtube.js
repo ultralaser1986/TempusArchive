@@ -216,4 +216,57 @@ YouTube.prototype.listVideos = async function (next) {
   }
 }
 
+YouTube.prototype.deleteVideos = async function (ids) {
+  if (!Array.isArray(ids)) ids = [ids]
+  try {
+    await dp.post('https://studio.youtube.com/youtubei/v1/creator/enqueue_creator_bulk_delete', {
+      query: {
+        alt: 'json',
+        key: INNERTUBE_KEY
+      },
+      headers: {
+        'x-origin': 'https://studio.youtube.com',
+        cookie: this.keys.cookies,
+        Authorization: this.keys.authorization
+      },
+      data: {
+        videos: { videoIds: ids },
+        context: {
+          client: { clientName: 62, clientVersion: '1.11111111' },
+          request: { sessionInfo: { token: this.keys.session } }
+        }
+      }
+    })
+  } catch (e) {
+    if (e.code === 400) return false
+    throw Error(e)
+  }
+  return true
+}
+
+YouTube.prototype.deleteVideo = async function (id) {
+  try {
+    let res = await dp.post('https://studio.youtube.com/youtubei/v1/video/delete', {
+      query: {
+        alt: 'json',
+        key: INNERTUBE_KEY
+      },
+      headers: {
+        'x-origin': 'https://studio.youtube.com',
+        cookie: this.keys.cookies,
+        Authorization: this.keys.authorization
+      },
+      data: {
+        videoId: id,
+        context: {
+          client: { clientName: 62, clientVersion: '1.11111111' },
+          request: { sessionInfo: { token: this.keys.session } }
+        }
+      }
+    }).json()
+    return res.success
+  } catch (e) {
+    throw Error(e)
+  }
+}
 module.exports = YouTube
