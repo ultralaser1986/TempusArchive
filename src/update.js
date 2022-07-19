@@ -33,8 +33,8 @@ async function updateRecordsFile (file) {
 
 async function updateUploadsFile (file) {
   let UPLOADS = new ListStore()
-  let dupes = []
-  let privacies = {}
+  let status = { dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
+  let info = {}
 
   let loopVids = async next => {
     let res = await yt.listVideos(next)
@@ -45,10 +45,10 @@ async function updateUploadsFile (file) {
 
       let key = `${tfclass}_${zone}`
 
-      if (UPLOADS[key]?.[record]) dupes.push(item.videoId)
+      if (UPLOADS[key]?.[record]) status.dupes.push(item.videoId)
       else {
         UPLOADS.add(key, record, item.videoId)
-        privacies[item.videoId] = item.privacy
+        info[item.videoId] = item
       }
     }
 
@@ -56,26 +56,34 @@ async function updateUploadsFile (file) {
   }
   await loopVids()
 
-  // verify privacy status for each upload
-  let status = { public: [], unlisted: [] }
   for (let key in UPLOADS) {
-    let records = UPLOADS[key]
-    let i = Object.keys(records).length
-    for (let record in records) {
-      let vid = records[record]
-      let privacy = privacies[vid]
+    let uploads = Object.values(UPLOADS[key])
+    for (let i = 0; i < uploads.length; i++) {
+      let vid = uploads[i]
+      let { privacy, description } = info[vid]
 
-      if (--i === 0) { // latest record should be public
-        if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.public.push(vid)
-      } else { // rest should be unlisted
-        if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.unlisted.push(vid)
+      // verify privacy status
+      if (i === uploads.length - 1) {
+        if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
+      } else {
+        if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
+      }
+
+      // verify description link chain
+      if (uploads.length > 1 && i !== 0) {
+        let pwr = uploads[i - 1]
+        let match = description.match('https://youtu.be/' + pwr)
+        if (!match) status.update[vid] = pwr
       }
     }
   }
 
-  if (dupes.length) console.log('Duplicate Records:', dupes)
-  if (status.public.length) console.log('Should be PUBLIC:', status.public)
-  if (status.unlisted.length) console.log('Should be UNLISTED:', status.unlisted)
+  if (!status.privacy.public.length) delete status.privacy.public
+  if (!status.privacy.unlisted.length) delete status.privacy.unlisted
+
+  if (status.dupes.length) console.log('Delete Duplicate Videos:', status.dupes)
+  if (Object.keys(status.privacy).length) console.log('Change Video Privacy:', status.privacy)
+  if (Object.keys(status.update).length) console.log('Change Description Chain Id:', status.update)
 
   UPLOADS.export(file)
 }
