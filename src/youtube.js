@@ -269,4 +269,5 @@ YouTube.prototype.deleteVideo = async function (id) {
     throw Error(e)
   }
 }
+
 module.exports = YouTube
