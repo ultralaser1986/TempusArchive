@@ -9,6 +9,7 @@ let tempus = require('./tempus')
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
 let MAX_MAPS = cfg.max_maps
+let NEWMAP_WAIT = cfg.new_map_wait
 let ZONES = cfg.zones
 
 async function updateRecordsFile (file) {
@@ -16,6 +17,7 @@ async function updateRecordsFile (file) {
   for (let i = 0; i < MAX_MAPS; i++) {
     let map = await tempus.getMap(i)
     if (map) {
+      if ((Date.now() - map.map_info.date_added * 1000) < NEWMAP_WAIT) continue // skip new maps
       for (let zone of ZONES) {
         for (let i = 0; i < map.zone_counts[zone]; i++) {
           let rec = await tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
