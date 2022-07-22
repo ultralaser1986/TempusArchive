@@ -113,9 +113,12 @@ async function main (ids) {
       continue
     }
 
-    await ending(rec.time, rec.improvement, 'default', cfg.tmp)
+    let file = util.join(cfg.output, rec.id + '.mp4')
 
-    let file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+    if (!util.exists(file)) {
+      await ending(rec.time, rec.improvement, 'default', cfg.tmp)
+      file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+    }
 
     console.log(id, '>>', file)
 

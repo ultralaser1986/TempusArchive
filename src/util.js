@@ -57,5 +57,8 @@ module.exports = {
   },
   size (file) {
     return this.formatBytes(fs.statSync(file).size)
+  },
+  exists (file) {
+    return fs.existsSync(file)
   }
 }
