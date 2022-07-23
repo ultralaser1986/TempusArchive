@@ -127,7 +127,7 @@ async function main (ids) {
     if (!util.exists(file)) {
       let end = await ending(rec.time, rec.improvement, 'default', cfg.tmp)
 
-      let ovr = overrides.filter(x => x.zones.includes(rec.zone) || x.maps.includes(rec.map))
+      let ovr = overrides.filter(x => x?.zones.includes(rec.zone) || x?.maps.includes(rec.map))
       ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
 
       file = await tr.record(rec, util.merge({
