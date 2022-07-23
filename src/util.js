@@ -60,5 +60,24 @@ module.exports = {
   },
   exists (file) {
     return fs.existsSync(file)
+  },
+  merge (target, ...sources) {
+    if (!sources.length) return target
+    let source = sources.shift()
+
+    let isObject = item => (item && typeof item === 'object' && !Array.isArray(item))
+
+    if (isObject(target) && isObject(source)) {
+      for (let key in source) {
+        if (isObject(source[key])) {
+          if (!target[key]) Object.assign(target, { [key]: {} })
+          this.merge(target[key], source[key])
+        } else {
+          Object.assign(target, { [key]: source[key] })
+        }
+      }
+    }
+
+    return this.merge(target, ...sources)
   }
 }

@@ -1,9 +1,11 @@
 process.chdir(require('path').dirname(__dirname))
 
 let cfg = require('../data/config.json')
-let ListStore = require('./liststore')
+
 let YouTube = require('./youtube')
 let yt = new YouTube(cfg.youtube)
+
+let ListStore = require('./liststore')
 let tempus = require('./tempus')
 
 ListStore.setValueSwaps([undefined, true], ['X', false])

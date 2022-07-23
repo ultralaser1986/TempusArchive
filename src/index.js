@@ -1,13 +1,17 @@
 process.chdir(require('path').dirname(__dirname))
 
-let cfg = require('../data/config.json')
 let util = require('./util')
-let ListStore = require('./liststore')
+let cfg = require('../data/config.json')
+
 let YouTube = require('./youtube')
 let yt = new YouTube(cfg.youtube)
+
 let TemRec = require('temrec')
 let tr = new TemRec(cfg.temrec, true)
+
+let ListStore = require('./liststore')
 let tempus = require('./tempus')
+let overrides = require(util.join('..', cfg.overrides))
 
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
@@ -77,9 +81,14 @@ async function ending (time, improvement, type, out) {
     .replaceAll('%SECON%', secon || '')
     .replaceAll('%DARY%', dary || '')
 
-  util.write(util.join(out, cfg.subs), subs)
+  let files = {
+    subs: util.join(out, cfg.subs).replaceAll('\\', '/'),
+    sfx: util.join(dir, cfg.sfx).replaceAll('\\', '/')
+  }
 
-  util.copy(util.join(dir, cfg.sfx), util.join(out, cfg.sfx))
+  util.write(files.subs, subs)
+
+  return files
 }
 
 function thumb (file, seconds) {
@@ -116,8 +125,22 @@ async function main (ids) {
     let file = util.join(cfg.output, rec.id + '.mp4')
 
     if (!util.exists(file)) {
-      await ending(rec.time, rec.improvement, 'default', cfg.tmp)
-      file = await tr.record(rec, { padding: cfg.padding, output: cfg.output, pre: cfg.pre, timed: true })
+      let end = await ending(rec.time, rec.improvement, 'default', cfg.tmp)
+
+      let ovr = overrides.filter(x => x.zones.includes(rec.zone) || x.maps.includes(rec.map))
+      ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
+
+      file = await tr.record(rec, util.merge({
+        padding: cfg.padding,
+        output: cfg.output,
+        pre: cfg.pre,
+        timed: true,
+        ffmpeg: {
+          sfx: end.sfx,
+          subs: end.subs,
+          curves: cfg.curves
+        }
+      }, ovr))
     }
 
     console.log(id, '>>', file)
