@@ -39,7 +39,7 @@ module.exports = {
     return ph.join(...paths)
   },
   mkdir (path) {
-    fs.mkdirSync(path)
+    if (!this.exists(path)) fs.mkdirSync(path)
   },
   copy (from, to) {
     fs.copyFileSync(from, to)
