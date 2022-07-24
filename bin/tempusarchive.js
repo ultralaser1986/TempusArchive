@@ -51,8 +51,7 @@ async function run (ids, opts) {
 
     console.log(MEDAL, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
-    let file = util.join(ta.out, rec.id + '.mp4')
-    if (!util.exists(file)) file = await ta.record(rec)
+    let file = await ta.record(rec)
 
     if (opts.upload) {
       if (ta.uploads[rec.key]?.[id]) {
