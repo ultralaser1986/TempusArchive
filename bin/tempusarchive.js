@@ -14,16 +14,24 @@ program
 
 program
   .command('update')
-  .description('update database')
+  .description('update database (records & uploads)')
   .action(() => ta.update())
 
 program
   .name('tempusarchive')
   .option('-n, --max <number>', 'limit number of records to render', 0)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files')
+  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day')
   .parse()
 
 async function run (ids, opts) {
+  if (Date.now() - util.date(ta.cfg.records) >= 86400000) {
+    if (opts.update) {
+      console.log('[TempusArchive] Updating records file...')
+      await ta.update({ records: true })
+    } else console.log('[TempusArchive] Records file is older than a day!')
+  }
+
   if (!ids.length) ids = ta.pending()
   if (!isNaN(opts.max) && ids.length > opts.max) ids.length = opts.max
 

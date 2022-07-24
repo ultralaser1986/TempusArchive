@@ -79,5 +79,8 @@ module.exports = {
     }
 
     return this.merge(target, ...sources)
+  },
+  date (file) {
+    return fs.statSync(file).mtime
   }
 }
