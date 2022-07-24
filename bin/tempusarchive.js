@@ -8,6 +8,8 @@ let ta = new TempusArchive('../data/config.json')
 
 let { program } = require('commander')
 
+let MEDAL = '[TempusArchive]'
+
 program
   .command('run')
   .description('start rendering')
@@ -29,42 +31,40 @@ program
 async function run (ids, opts) {
   if (Date.now() - util.date(ta.cfg.records) >= 86400000) {
     if (opts.update) {
-      console.log('[TempusArchive] Updating records file...')
+      console.log(MEDAL, 'Updating records file...')
       await ta.update({ records: true })
-    } else console.log('[TempusArchive] Records file is older than a day!')
+    } else console.log(MEDAL, 'Records file is older than a day!')
   }
 
   if (!ids.length) ids = ta.pending()
   if (!isNaN(opts.max) && ids.length > opts.max) ids.length = opts.max
 
-  console.log(`[TempusArchive] Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
-  if (!opts.upload) console.log('[TempusArchive] Uploading disabled.')
+  console.log(MEDAL, `Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
+  if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
 
   await ta.launch()
 
   for (let i = 0; i < ids.length; i++) {
     let id = ids[i]
 
-    console.log(`[TempusArchive] Progress: ${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}%`)
-
     let rec = await ta.fetch(id)
 
-    console.log(id, '<<', rec.display)
+    console.log(MEDAL, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
     let file = util.join(ta.out, rec.id + '.mp4')
     if (!util.exists(file)) file = await ta.record(rec)
 
     if (opts.upload) {
       if (ta.uploads[rec.key]?.[id]) {
-        console.log(id, '>>', 'Already Uploaded:', ta.uploads[rec.key][id])
+        console.log(MEDAL, 'Already Uploaded:', ta.uploads[rec.key][id])
         continue
       }
 
       let vid = await ta.upload(rec, file)
-      console.log(id, '>>', `[${util.size(file)}] https://youtu.be/${vid}`)
+      console.log(MEDAL, `https://youtu.be/${vid} <${util.size(file)}>`)
 
       util.remove(file)
-    } else console.log(id, '>>', file)
+    } else console.log(MEDAL, `Output: "${file}"`)
   }
 
   await ta.exit()
