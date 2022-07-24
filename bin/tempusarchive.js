@@ -7,15 +7,25 @@ let ta = new TempusArchive('../data/config.json')
 let { program } = require('commander')
 
 program
+  .command('run')
+  .description('start rendering')
+  .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
+  .action(ids => run(ids, program.opts()))
+
+program
+  .command('update')
+  .description('update database')
+  .action(() => ta.update())
+
+program
   .name('tempusarchive')
-  .argument('[ids...]', 'List of specific record ids to be rendered, otherwise renders all pending ones')
-  .option('-n, --max <number>', 'Limit number of records to render', 0)
-  .option('-k, --no-upload', 'Skip uploading and don\'t delete output files')
+  .option('-n, --max <number>', 'limit number of records to render', 0)
+  .option('-k, --no-upload', 'skip uploading and don\'t delete output files')
   .parse()
 
-async function main (ids, opts) {
+async function run (ids, opts) {
   if (!ids.length) ids = ta.pending()
-  if (opts.max && ids.length > opts.max) ids.length = opts.max
+  if (!isNaN(opts.max) && ids.length > opts.max) ids.length = opts.max
 
   console.log(`[TempusArchive] Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
   if (!opts.upload) console.log('[TempusArchive] Uploading disabled.')
@@ -49,8 +59,6 @@ async function main (ids, opts) {
 
   await ta.exit()
 }
-
-main(program.args, program.opts())
 
 let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
 KILLERS.forEach(killer => process.on(killer, () => {
