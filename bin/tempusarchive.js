@@ -41,9 +41,9 @@ async function main (ids, opts) {
       }
 
       let vid = await ta.upload(rec, file)
-      util.remove(file)
-
       console.log(id, '>>', `[${util.size(file)}] https://youtu.be/${vid}`)
+
+      util.remove(file)
     } else console.log(id, '>>', file)
   }
 
