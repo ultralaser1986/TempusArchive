@@ -19,9 +19,16 @@ async function main (ids, opts) {
   if (!ids.length) ids = ta.pending()
   if (opts.max && ids.length > opts.max) ids.length = opts.max
 
+  console.log(`[TempusArchive] Queued ${ids.length} records for render.`)
+  if (!opts.upload) console.log('[TempusArchive] Uploading disabled.')
+
   await ta.launch()
 
-  for (let id of ids) {
+  for (let i = 0; i < ids.length; i++) {
+    let id = ids[i]
+
+    console.log(`[TempusArchive] Progress: ${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}%`)
+
     let rec = await ta.fetch(id)
 
     console.log(id, '<<', rec.display)
