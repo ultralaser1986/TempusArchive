@@ -25,7 +25,9 @@ async function main (ids, opts) {
     let rec = await ta.fetch(id)
 
     console.log(id, '<<', rec.display)
-    let file = await ta.record(rec)
+
+    let file = util.join(this.out, rec.id + '.mp4')
+    if (!util.exists(file)) file = await ta.record(rec)
 
     if (opts.upload) {
       if (ta.uploads[rec.key]?.[id]) {

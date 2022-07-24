@@ -12,6 +12,7 @@ class TempusArchive {
     this.cfg = require(config)
     this.overrides = require(util.join('..', this.cfg.overrides))
     this.tmp = this.cfg.tmp
+    this.out = this.cfg.output
 
     this.yt = new YouTube(this.cfg.youtube)
     this.tr = new TemRec(this.cfg.temrec, true)
@@ -54,7 +55,7 @@ class TempusArchive {
 
     let file = await this.tr.record(rec, util.merge({
       padding: this.cfg.padding,
-      output: this.cfg.output,
+      output: this.cfg.out,
       pre: this.cfg.pre,
       timed: true,
       ffmpeg: {
