@@ -150,21 +150,22 @@ class TempusArchive {
       await loopVids()
 
       for (let key in uploads) {
-        let uploads = Object.values(this.uploads[key])
-        for (let i = 0; i < uploads.length; i++) {
-          let vid = uploads[i]
+        let ups = Object.values(uploads[key])
+        for (let i = 0; i < ups.length; i++) {
+          let vid = ups[i]
+          if (!info[vid]) console.log({ vid })
           let { privacy, description } = info[vid]
 
           // verify privacy status
-          if (i === uploads.length - 1) {
+          if (i === ups.length - 1) {
             if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
           } else {
             if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
           }
 
           // verify description link chain
-          if (uploads.length > 1 && i !== 0) {
-            let pwr = uploads[i - 1]
+          if (ups.length > 1 && i !== 0) {
+            let pwr = ups[i - 1]
             let match = description.match('https://youtu.be/' + pwr)
             if (!match) status.update[vid] = pwr
           }
