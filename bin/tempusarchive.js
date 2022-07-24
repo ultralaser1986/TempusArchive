@@ -1,4 +1,6 @@
 #! /usr/bin/env node
+process.chdir(require('path').dirname(__dirname))
+
 let util = require('../src/util')
 
 let TempusArchive = require('../src')
