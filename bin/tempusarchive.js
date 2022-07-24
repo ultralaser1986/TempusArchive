@@ -19,7 +19,7 @@ program
 program
   .command('update')
   .description('update database (records & uploads)')
-  .action(() => ta.update())
+  .action(() => ta.update({ records: program.opts().update, uploads: true }))
 
 program
   .name('tempusarchive')
