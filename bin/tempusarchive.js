@@ -1,10 +1,8 @@
 #! /usr/bin/env node
-process.chdir(require('path').dirname(__dirname))
-
 let util = require('../src/util')
 
 let TempusArchive = require('../src')
-let ta = new TempusArchive('data/config.ini')
+let ta = new TempusArchive('../data/config.json')
 
 let { program } = require('commander')
 
@@ -19,7 +17,7 @@ async function main (ids, opts) {
   if (!ids.length) ids = ta.pending()
   if (opts.max && ids.length > opts.max) ids.length = opts.max
 
-  console.log(`[TempusArchive] Queued ${ids.length} records for render.`)
+  console.log(`[TempusArchive] Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
   if (!opts.upload) console.log('[TempusArchive] Uploading disabled.')
 
   await ta.launch()
@@ -33,7 +31,7 @@ async function main (ids, opts) {
 
     console.log(id, '<<', rec.display)
 
-    let file = util.join(this.out, rec.id + '.mp4')
+    let file = util.join(ta.out, rec.id + '.mp4')
     if (!util.exists(file)) file = await ta.record(rec)
 
     if (opts.upload) {

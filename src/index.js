@@ -1,5 +1,3 @@
-process.chdir(require('path').dirname(__dirname))
-
 let util = require('./util')
 let tempus = require('./tempus')
 let YouTube = require('./youtube')
@@ -20,8 +18,8 @@ class TempusArchive {
     this.records = new ListStore(this.cfg.records)
     this.uploads = new ListStore(this.cfg.uploads)
 
-    this.launch = this.tr.launch
-    this.exit = this.tr.exit
+    this.launch = x => this.tr.launch(x)
+    this.exit = x => this.tr.exit(x)
   }
 
   pending () {
@@ -55,7 +53,7 @@ class TempusArchive {
 
     let file = await this.tr.record(rec, util.merge({
       padding: this.cfg.padding,
-      output: this.cfg.out,
+      output: this.out,
       pre: this.cfg.pre,
       timed: true,
       ffmpeg: {
