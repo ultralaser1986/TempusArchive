@@ -29,7 +29,7 @@ program
   .parse()
 
 async function run (ids, opts) {
-  if (Date.now() - util.date(ta.cfg.records) >= 86400000) {
+  if (Date.now() - util.date(ta.cfg.records) >= 72000000) {
     if (opts.update) {
       console.log(MEDAL, 'Updating records file...')
       await ta.update({ records: true })
