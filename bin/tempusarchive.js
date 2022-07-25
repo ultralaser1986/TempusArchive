@@ -37,7 +37,7 @@ async function run (ids, opts) {
   }
 
   if (!ids.length) ids = ta.pending()
-  if (!isNaN(opts.max) && ids.length > opts.max) ids.length = opts.max
+  if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
 
   console.log(MEDAL, `Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
   if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
