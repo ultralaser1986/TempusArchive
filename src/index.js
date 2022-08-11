@@ -194,18 +194,16 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let primary = util.formatTime(time * 1000)
-    let secondary = improvement ? util.formatTime(improvement * 1000, improvement < 0.001 ? 4 : 3) : ''
+    let secondary = util.formatTime(improvement * 1000, improvement < 0.001 ? 4 : 3) || ''
     let [pri, mary] = primary.split('.')
     let [secon, dary] = secondary.split('.')
 
+    if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
+
     subs = subs
       .replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
-      .replaceAll('%PRIMARY%', primary || '')
-      .replaceAll('%PRI%', pri || '')
-      .replaceAll('%MARY%', mary || '')
-      .replaceAll('%SECONDARY%', secondary || '')
-      .replaceAll('%SECON%', secon || '')
-      .replaceAll('%DARY%', dary || '')
+      .replaceAll('%PRIMARY%', primary).replaceAll('%PRI%', pri).replaceAll('%MARY%', mary)
+      .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
 
     let files = {
       subs: util.join(out, this.cfg.subs).replaceAll('\\', '/'),
