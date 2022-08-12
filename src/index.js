@@ -52,17 +52,27 @@ class TempusArchive {
     let ovr = this.overrides.filter(x => x?.zones.includes(rec.zone) || x?.maps.includes(rec.map))
     ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
 
-    let file = await this.tr.record(rec, util.merge({
+    let opts = util.merge({
       padding: this.cfg.padding,
       output: this.out,
       pre: this.cfg.pre,
       timed: true,
       ffmpeg: {
-        sfx: end.sfx,
+        '!sfx': end.sfx,
         subs: end.subs,
         curves: this.cfg.curves
       }
-    }, ovr))
+    }, ovr)
+
+    for (let key in opts.ffmpeg) {
+      opts.ffmpeg[key] = util.resolve(opts.ffmpeg[key]).replaceAll('\\', '/')
+
+      // we need to escape colons in filter params but NOT in input params
+      // ugly workaround for now
+      if (key[0] !== '!') opts.ffmpeg[key] = opts.ffmpeg[key].replaceAll(':', '\\:')
+    }
+
+    let file = await this.tr.record(rec, opts)
 
     util.remove(this.tmp)
 
@@ -207,8 +217,8 @@ class TempusArchive {
       .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
 
     let files = {
-      subs: util.join(out, this.cfg.subs).replaceAll('\\', '/'),
-      sfx: util.join(dir, this.cfg.sfx).replaceAll('\\', '/')
+      subs: util.join(out, this.cfg.subs),
+      sfx: util.join(dir, this.cfg.sfx)
     }
 
     util.write(files.subs, subs)

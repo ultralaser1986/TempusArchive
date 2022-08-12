@@ -38,6 +38,9 @@ module.exports = {
   join (...paths) {
     return ph.join(...paths)
   },
+  resolve (...paths) {
+    return ph.resolve(...paths)
+  },
   mkdir (path) {
     if (!this.exists(path)) fs.mkdirSync(path)
   },
