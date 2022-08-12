@@ -14,6 +14,7 @@ class TempusArchive {
 
     this.yt = new YouTube(this.cfg.youtube)
     this.tr = new TemRec(this.cfg.temrec, true)
+    this.tr.tmp = this.tmp
 
     this.records = new ListStore(this.cfg.records)
     this.uploads = new ListStore(this.cfg.uploads)
