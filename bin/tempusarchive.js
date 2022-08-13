@@ -22,6 +22,11 @@ program
   .action(() => ta.update({ records: program.opts().update, uploads: true }))
 
 program
+  .command('cleanup')
+  .description('delete leftover temporary files')
+  .action(() => ta.tr.init())
+
+program
   .name('tempusarchive')
   .option('-n, --max <number>', 'limit number of records to render', 0)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files')
