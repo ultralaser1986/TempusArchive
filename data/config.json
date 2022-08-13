@@ -13,6 +13,7 @@
     "curves": "data/curves.acv",
     "max_maps": 800,
     "new_map_wait": 604800000, 
+    "record_update_wait":  72000000,
     "zones": ["bonus", "trick"],
     "padding": 200,
     "pre": 300,
