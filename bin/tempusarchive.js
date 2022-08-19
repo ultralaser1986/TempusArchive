@@ -15,8 +15,8 @@ program
   .description('start rendering')
   .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
   .option('-n, --max <number>', 'limit number of records to render', 0)
-  .option('-k, --no-upload', 'skip uploading and don\'t delete output files', false)
-  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day')
+  .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
+  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
   .action((ids, opts) => run(ids, opts))
 
 program
