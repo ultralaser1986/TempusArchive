@@ -14,12 +14,25 @@ program
   .command('run')
   .description('start rendering')
   .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
-  .action(ids => run(ids, program.opts()))
+  .option('-n, --max <number>', 'limit number of records to render', 0)
+  .option('-k, --no-upload', 'skip uploading and don\'t delete output files', false)
+  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day')
+  .action((ids, opts) => run(ids, opts))
 
 program
   .command('update')
-  .description('update database (records & uploads)')
-  .action(() => ta.update({ records: program.opts().update, uploads: true }))
+  .description('update databases')
+  .argument('[types...]', 'database types to update (players/records/uploads)')
+  .action(types => {
+    if (!types.length) types = ['players', 'records', 'uploads']
+
+    types = types.reduce((obj, item) => {
+      obj[item] = true
+      return obj
+    }, {})
+
+    ta.update(types)
+  })
 
 program
   .command('cleanup')
@@ -28,9 +41,6 @@ program
 
 program
   .name('tempusarchive')
-  .option('-n, --max <number>', 'limit number of records to render', 0)
-  .option('-k, --no-upload', 'skip uploading and don\'t delete output files')
-  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day')
   .parse()
 
 async function run (ids, opts) {
