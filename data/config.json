@@ -1,6 +1,7 @@
 {
     "temrec": "data/archive.ini",
     "youtube": "data/keys.json",
+    "players": "data/players.list",
     "records": "data/records.list",
     "uploads": "data/uploads.list",
     "overrides": "data/overrides.json",
@@ -21,5 +22,6 @@
         "game": "/m/060phy",
         "category": 20,
         "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman", "tempus network"]
-    }
+    },
+    "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json"
 }

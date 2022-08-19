@@ -85,5 +85,24 @@ module.exports = {
   },
   date (file) {
     return fs.statSync(file).mtime
+  },
+  formatSteamID (id) {
+    if (id.startsWith('STEAM_')) return id
+
+    let steam = 76561197960265728n
+
+    let uid = id.match(/\[U:(\d):(\d+)]/)
+    if (uid) {
+      let num = Number(uid[2])
+      let uni = Number(num % 2 !== 0)
+      return 'STEAM_0:' + uni + ':' + ((num - uni) / 2)
+    }
+
+    if (!isNaN(id)) {
+      let uni = BigInt(id % 2 !== 0)
+      return 'STEAM_0:' + uni + ':' + ((BigInt(id) - steam + uni) / 2n)
+    }
+
+    return null
   }
 }

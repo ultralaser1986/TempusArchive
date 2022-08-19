@@ -1,3 +1,4 @@
+let dp = require('despair')
 let util = require('./util')
 let tempus = require('./tempus')
 let YouTube = require('./youtube')
@@ -16,6 +17,7 @@ class TempusArchive {
     this.tr = new TemRec(this.cfg.temrec, true)
     this.tr.tmp = this.tmp
 
+    this.players = new ListStore(this.cfg.players)
     this.records = new ListStore(this.cfg.records)
     this.uploads = new ListStore(this.cfg.uploads)
 
@@ -40,7 +42,11 @@ class TempusArchive {
     let rec = await TemRec.fetch(id)
     rec.key = `${rec.class}_${rec.zone}`
     rec.improvement = await tempus.getImprovementFromRecord(rec)
-    rec.display = await tempus.formatDisplay(rec)
+
+    let nick = this.players[rec.player]
+    if (nick) nick = Object.keys(nick)[0]
+
+    rec.display = await tempus.formatDisplay(rec, nick)
     return rec
   }
 
@@ -115,7 +121,17 @@ class TempusArchive {
     return vid
   }
 
-  async update (opts = { records: true, uploads: true }) {
+  async update (opts = { players: true, records: true, uploads: true }) {
+    if (opts.players) {
+      let nicknames = await dp(this.cfg.nickdata).json()
+      for (let nick of nicknames) {
+        let id = util.formatSteamID(nick.steamId)
+        if (!this.players[id]) this.players[id] = { [nick.name]: true }
+      }
+
+      this.players.export()
+    }
+
     if (opts.records) {
       let records = new ListStore()
       for (let i = 0; i < this.cfg.max_maps; i++) {
@@ -137,6 +153,7 @@ class TempusArchive {
       records.export(this.cfg.records)
       this.records = records
     }
+
     if (opts.uploads) {
       let uploads = new ListStore()
       let status = { dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
@@ -147,7 +164,7 @@ class TempusArchive {
 
         for (let item of res.items) {
           let tfclass = item.title.match(/^\[(\w)\]/)[1]
-          let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/).map(x => Number(x))
+          let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
 
           let key = `${tfclass}_${zone}`
 
