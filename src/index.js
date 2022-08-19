@@ -44,10 +44,10 @@ class TempusArchive {
     return rec
   }
 
-  async record (rec) {
+  async record (rec, type = 'default') {
     util.mkdir(this.tmp)
 
-    let end = await this.#ending(rec.time, rec.improvement, 'default', this.tmp)
+    let end = await this.#ending(rec.time, rec.improvement, type, this.tmp)
 
     let ovr = this.overrides.filter(x => x?.zones.includes(rec.zone) || x?.maps.includes(rec.map))
     ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
