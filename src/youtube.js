@@ -2,6 +2,7 @@ let dp = require('despair')
 let fs = require('fs')
 let ph = require('path')
 let crypto = require('crypto')
+let risk = require('./risk/risk')
 
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
@@ -39,12 +40,23 @@ function getVideoInfo (file) {
 }
 
 function YouTube (keyfile) {
-  let keys = JSON.parse(fs.readFileSync(ph.resolve(keyfile)))
+  this.file = ph.resolve(keyfile)
+
+  let keys = JSON.parse(fs.readFileSync(this.file))
 
   this.keys = {
     cookies: `CONSENT=YES+cb;${Object.entries(keys.cookies).map(x => x.join('=')).join(';')};`,
     authorization: `SAPISIDHASH ${getSAPSIDHASH(keys.cookies.SAPISID)}`,
     session: keys.sessionInfo
+  }
+}
+
+YouTube.prototype.updateSession = async function () {
+  let check = await this.updateVideo('00000000000').catch(e => e.code === 403)
+  if (!check) {
+    let keys = JSON.parse(fs.readFileSync(this.file))
+    this.keys.session = keys.sessionInfo = await risk(keys.cookies)
+    fs.writeFileSync(this.file, JSON.stringify(keys, null, 2))
   }
 }
 
@@ -85,7 +97,7 @@ YouTube.prototype.updateVideo = async function (vid, data) {
         }
       }
     })
-  } catch (e) { throw Error(e) }
+  } catch (e) { throw JSON.parse(e.body).error }
 }
 
 YouTube.prototype.describeFile = async function (video) {

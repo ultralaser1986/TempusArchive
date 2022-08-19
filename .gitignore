@@ -1,4 +1,4 @@
-/node_modules
+**/node_modules
 /data/output
 /data/tmp
 /data/keys.json

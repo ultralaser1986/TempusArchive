@@ -82,6 +82,8 @@ class TempusArchive {
   async upload (rec, file) {
     util.mkdir(this.tmp)
 
+    await this.yt.updateSession()
+
     let override = this.uploads[rec.key]
     if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
 
