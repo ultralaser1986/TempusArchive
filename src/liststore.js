@@ -11,7 +11,10 @@ function ListStore (path) {
     for (let line of file.split(/\r?\n/)) {
       line = line.trim()
       if (line) {
-        let parts = line.split(' ')
+        let parts = line.match(/[^"\s]+|"(?:\\"|[^"])+"/g).map(x => {
+          if (x[0] === '"' && x.at(-1) === '"') x = x.slice(1, -1)
+          return x
+        })
         this.add([parts.shift()], ...parts)
       }
     }
@@ -36,6 +39,10 @@ Object.defineProperties(ListStore.prototype, {
         key = key[0]
         swap = true
       }
+
+      key = key.replaceAll('\\"', '"')
+      args = args.map(x => x.replaceAll('\\"', '"'))
+
       if (!this[key]) this[key] = {}
       for (let i = 0; i < args.length; i++) {
         let prop = args[i]
@@ -56,7 +63,8 @@ Object.defineProperties(ListStore.prototype, {
           if (ListStore.valueSwap) value = ListStore.valueSwap(value)
           line.push(prop, value)
         }
-        out.push(line.join(' '))
+        line = line.map(x => x && x.indexOf(' ') > 0 ? `"${x.replaceAll('"', '\\"')}"` : x)
+        out.push(line.join(' ').trim())
       }
       fs.writeFileSync(path, out.join('\n'))
     }
