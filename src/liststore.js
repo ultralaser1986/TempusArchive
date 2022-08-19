@@ -40,8 +40,8 @@ Object.defineProperties(ListStore.prototype, {
         swap = true
       }
 
-      key = key.toString().replaceAll('\\"', '"')
-      args = args.map(x => x.toString().replaceAll('\\"', '"'))
+      key = typeof key === 'string' ? key.replaceAll('\\"', '"') : key
+      args = args.map(x => typeof x === 'string' ? x.replaceAll('\\"', '"') : x)
 
       if (!this[key]) this[key] = {}
       for (let i = 0; i < args.length; i++) {
