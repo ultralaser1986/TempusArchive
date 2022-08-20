@@ -9,6 +9,8 @@ let ta = new TempusArchive('../data/config.json')
 let { program } = require('commander')
 
 let MEDAL = '[TempusArchive]'
+let MEDAL_OPEN = '╔═════════════╗'
+let MEDAL_CLOSE = '╚═════════════╝'
 
 program
   .command('run')
@@ -60,25 +62,30 @@ async function run (ids, opts) {
   await ta.launch()
 
   for (let i = 0; i < ids.length; i++) {
+    console.log(MEDAL_OPEN)
+
     let id = ids[i]
 
     let rec = await ta.fetch(id)
 
     console.log(MEDAL, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
-    let file = await ta.record(rec)
+    if (opts.upload && ta.uploads[rec.key]?.[id]) {
+      console.log(MEDAL, 'Already Uploaded:', ta.uploads[rec.key][id])
+      console.log(MEDAL_CLOSE)
+      continue
+    }
+
+    let file = await ta.record(rec, 'default')
 
     if (opts.upload) {
-      if (ta.uploads[rec.key]?.[id]) {
-        console.log(MEDAL, 'Already Uploaded:', ta.uploads[rec.key][id])
-        continue
-      }
-
       let vid = await ta.upload(rec, file)
       console.log(MEDAL, `https://youtu.be/${vid} <${util.size(file)}>`)
 
       util.remove(file)
     } else console.log(MEDAL, `Output: "${file}"`)
+
+    console.log(MEDAL_CLOSE)
   }
 
   await ta.exit()
