@@ -46,7 +46,7 @@ program
   .parse()
 
 async function run (ids, opts) {
-  if (Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
+  if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
     if (opts.update) {
       console.log(MEDAL, 'Updating records file...')
       await ta.update({ records: true })
