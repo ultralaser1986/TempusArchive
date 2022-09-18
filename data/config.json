@@ -23,5 +23,6 @@
         "category": 20,
         "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman", "tempus network"]
     },
-    "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json"
+    "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
+    "state": "STATE"
 }

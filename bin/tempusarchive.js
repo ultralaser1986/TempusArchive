@@ -19,6 +19,7 @@ program
   .option('-n, --max <number>', 'limit number of records to render', 0)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
   .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
 
 program
@@ -39,13 +40,28 @@ program
 program
   .command('cleanup')
   .description('delete leftover temporary files')
-  .action(() => ta.tr.init())
+  .action(() => {
+    ta.tr.init()
+    util.remove(ta.cfg.state)
+  })
 
 program
   .name('tempusarchive')
   .parse()
 
 async function run (ids, opts) {
+  if (opts.continue) {
+    console.log(MEDAL, 'Continuing from previous state...')
+    if (!util.exists(ta.cfg.state)) {
+      console.log(MEDAL, 'Could not continue. State file does not exist.')
+      return
+    } else {
+      let state = JSON.parse(util.read(ta.cfg.state))
+      ids = state.ids
+      opts = state.opts
+    }
+  }
+
   if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
     if (opts.update) {
       console.log(MEDAL, 'Updating records file...')
@@ -56,12 +72,16 @@ async function run (ids, opts) {
   if (!ids.length) ids = ta.pending()
   if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
 
-  console.log(MEDAL, `Queued ${ids.length} record${ids.length === 1 ? '' : 's'} for render.`)
+  let start = opts.index ?? 0
+
+  console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
   if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
 
   await ta.launch()
 
-  for (let i = 0; i < ids.length; i++) {
+  for (let i = start; i < ids.length; i++) {
+    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i } }))
+
     let id = ids[i]
 
     let rec = await ta.fetch(id)
@@ -82,6 +102,8 @@ async function run (ids, opts) {
       util.remove(file)
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
   }
+
+  util.remove(ta.cfg.state)
 
   await ta.exit()
 }
