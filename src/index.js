@@ -59,6 +59,7 @@ class TempusArchive {
     ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
 
     let opts = util.merge({
+      cmd: 'r_cleardecals',
       padding: this.cfg.padding,
       output: this.out,
       pre: this.cfg.pre,
