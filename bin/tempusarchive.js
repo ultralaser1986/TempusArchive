@@ -40,7 +40,10 @@ program
 program
   .command('cleanup')
   .description('delete leftover temporary files')
-  .action(() => ta.tr.init())
+  .action(() => {
+    ta.tr.init()
+    util.remove(ta.cfg.state)
+  })
 
 program
   .name('tempusarchive')
@@ -100,13 +103,15 @@ async function run (ids, opts) {
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
   }
 
+  util.remove(ta.cfg.state)
+
   await ta.exit()
 }
 
 let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
 KILLERS.forEach(killer => process.on(killer, () => {
   try {
-    util.remove([ta.tmp, ta.cfg.state])
+    util.remove(ta.tmp)
     if (ta.tr.app) ta.exit(true)
   } catch (e) {}
 }))
