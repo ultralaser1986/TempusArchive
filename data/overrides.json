@@ -18,5 +18,11 @@
                 "curves": "data/curves_fullbright.acv"
             }
         }
+    },
+    {
+        "zones": [ 7789, 7791, 7793, 7795 ],
+        "override": {
+            "cmd": "r_renderoverlayfragment 0"
+        }
     }
 ]
