@@ -46,6 +46,20 @@ program
   })
 
 program
+  .command('cubemaps')
+  .description('build cubemaps for specific map')
+  .argument('<map>', 'map name to build cubemaps for')
+  .argument('[hdr level]', 'set hdr level', 0)
+  .action(async (map, hdr) => {
+    ta.tr.cfg.General.game_cmds += `; mat_hdr_level ${isNaN(hdr) ? 0 : hdr}; mat_specular 0; map "${map}"`
+    ta.tr.cfg.General.game_args += ' -buildcubemaps -nosound'
+
+    await ta.launch()
+
+    console.log(MEDAL, `Building cubemaps for ${map}...`)
+  })
+
+program
   .name('tempusarchive')
   .parse()
 
