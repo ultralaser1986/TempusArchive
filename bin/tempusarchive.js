@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 process.chdir(require('path').dirname(__dirname))
 
 let util = require('../src/util')
