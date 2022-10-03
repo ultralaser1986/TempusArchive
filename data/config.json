@@ -21,7 +21,7 @@
     "meta": {
         "game": "/m/060phy",
         "category": 20,
-        "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman", "tempus network"]
+        "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman"]
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
     "state": "STATE"
