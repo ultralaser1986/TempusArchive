@@ -2,7 +2,7 @@ let dp = require('despair')
 let fs = require('fs')
 let ph = require('path')
 let crypto = require('crypto')
-let risk = require('./risk/risk')
+let risk = require('./risk')
 
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
