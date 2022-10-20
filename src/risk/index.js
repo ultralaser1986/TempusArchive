@@ -26,7 +26,7 @@ async function getSessionRisk (cookies) {
 
   await page.goto('https://studio.youtube.com/channel/my/editing/details')
 
-  await page.waitForSelector('#textbox')
+  try { await page.waitForSelector('#textbox') } catch (e) {}
 
   let txt = await page.evaluate(() => {
     let box = document.getElementById('textbox')
