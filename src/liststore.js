@@ -7,6 +7,7 @@ function ListStore (path) {
       value: ph.resolve(path),
       enumerable: false
     })
+    if (!fs.existsSync(this.path)) return
     let file = fs.readFileSync(this.path, 'utf-8')
     for (let line of file.split(/\r?\n/)) {
       line = line.trim()
