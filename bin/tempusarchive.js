@@ -107,13 +107,26 @@ async function run (ids, opts) {
       continue
     }
 
-    let file = await ta.record(rec, 'default')
+    let file = null
+
+    try {
+      file = await ta.record(rec, 'default')
+    } catch (e) {
+      console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
+      console.error(e)
+      break
+    }
 
     if (opts.upload) {
-      let vid = await ta.upload(rec, file)
-      console.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>`)
-
-      util.remove(file)
+      try {
+        let vid = await ta.upload(rec, file)
+        console.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>`)
+        util.remove(file)
+      } catch (e) {
+        console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
+        console.error(e)
+        break
+      }
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
   }
 
