@@ -1,5 +1,11 @@
 [
     {
+        "records": [ 4398552 ],
+        "override": {
+            "skip": true
+        }
+    },
+    {
         "zones": [ 10988 ],
         "maps": [
             "jump_fear_redo",

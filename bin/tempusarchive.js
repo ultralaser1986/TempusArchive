@@ -117,6 +117,11 @@ async function run (ids, opts) {
       break
     }
 
+    if (file === null) {
+      console.log(MEDAL_CLOSE, 'Skipping record.')
+      continue
+    }
+
     if (opts.upload) {
       try {
         let vid = await ta.upload(rec, file)

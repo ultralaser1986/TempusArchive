@@ -57,10 +57,12 @@ class TempusArchive {
 
     let cmds = ['r_cleardecals']
 
-    let ovr = this.overrides.filter(x => x.zones?.includes(rec.zone) || x.maps?.includes(rec.map))
+    let ovr = this.overrides.filter(x => x.zones?.includes(rec.zone) || x.maps?.includes(rec.map) || x.records?.includes(rec.id))
     ovr.forEach(obj => obj.override && obj.override.cmd && cmds.push(obj.override.cmd))
     ovr = ovr.reduce((obj, item) => item.override ? Object.assign(obj, item.override) : obj, {})
     ovr.cmd = cmds.join(';')
+
+    if (ovr.skip) return null
 
     let opts = util.merge({
       padding: this.cfg.padding,
