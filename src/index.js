@@ -100,7 +100,9 @@ class TempusArchive {
     if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
 
     let desc = `https://tempus.xyz/records/${rec.id}/${rec.zone}`
-    if (override) desc += `\n\nPrevious WR: https://youtu.be/${override}`
+    if (override) desc += `\nPrevious Record: https://youtu.be/${override}`
+    desc += `\n\n\nPlayer: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`
+    desc += `\nDate: ${new Date(rec.date * 1000).toUTCString()}`
 
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,

@@ -2,6 +2,8 @@ let fs = require('fs')
 let ph = require('path')
 let child = require('child_process')
 
+let STEAM_BASE = 76561197960265728n
+
 module.exports = {
   formatTime (ms, decimals = 3) {
     if (!ms) return null
@@ -89,8 +91,6 @@ module.exports = {
   formatSteamID (id) {
     if (id.startsWith('STEAM_')) return id
 
-    let steam = 76561197960265728n
-
     let uid = id.match(/\[U:(\d):(\d+)]/)
     if (uid) {
       let num = Number(uid[2])
@@ -100,9 +100,15 @@ module.exports = {
 
     if (!isNaN(id)) {
       let uni = BigInt(id % 2 !== 0)
-      return 'STEAM_0:' + uni + ':' + ((BigInt(id) - steam + uni) / 2n)
+      return 'STEAM_0:' + uni + ':' + ((BigInt(id) - STEAM_BASE + uni) / 2n)
     }
 
     return null
+  },
+  formatSteamProfile (id) {
+    let str = this.formatSteamID(id)
+    let [, uni, num] = str.split(':').map(Number)
+    num = (BigInt(num) * 2n) + STEAM_BASE + BigInt(uni)
+    return num.toString()
   }
 }
