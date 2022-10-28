@@ -18,15 +18,17 @@ async function getSessionRisk (cookies) {
       req.continue()
       let data = req.postData()
       if (data) {
-        data = JSON.parse(data).context?.request?.sessionInfo?.token
-        if (data) resolve(data)
+        try {
+          data = JSON.parse(data).context?.request?.sessionInfo?.token
+          if (data) resolve(data)
+        } catch (e) { }
       }
     })
   })
 
   await page.goto('https://studio.youtube.com/channel/my/editing/details')
 
-  try { await page.waitForSelector('#textbox') } catch (e) {}
+  try { await page.waitForSelector('#textbox') } catch (e) { }
 
   let txt = await page.evaluate(() => {
     let box = document.getElementById('textbox')
