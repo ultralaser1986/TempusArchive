@@ -1,17 +1,17 @@
 let dp = require('despair')
 let util = require('./util')
 let tempus = require('./tempus')
+let boxticks = require('./boxticks')
 let YouTube = require('./youtube')
 let TemRec = require('temrec')
 let ListStore = require('./liststore')
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
-// let boxticks = require('./boxticks')
-
 class TempusArchive {
   constructor (config) {
     this.cfg = require(config)
     this.overrides = require(util.join('..', this.cfg.overrides))
+    this.levelzones = require(util.join('..', this.cfg.levelzones))
     this.tmp = this.cfg.tmp
     this.out = this.cfg.output
 
@@ -106,22 +106,20 @@ class TempusArchive {
     desc += `\n\n\nPlayer: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`
     desc += `\nDate: ${new Date(rec.date * 1000).toUTCString()}`
 
-    /*
-    // Level Chapters
+    let zones = this.levelzones[rec.zone]
 
-    let zones = levelzones[rec.zone]
+    if (zones) {
+      let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
+      let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
 
-    let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
-    let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
+      desc += '\n\n0:00 Start'
 
-    desc += '\n'
-
-    for (let i = 0; i < boxes.length; i++) {
-      let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
-      let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
-      desc += `\n${time} Level ${i + 1}`
+      for (let i = 0; i < boxes.length; i++) {
+        let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
+        let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
+        desc += `\n${time} Level ${i + 1}`
+      }
     }
-    */
 
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,

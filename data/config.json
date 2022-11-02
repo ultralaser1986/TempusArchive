@@ -5,6 +5,7 @@
     "records": "data/records.list",
     "uploads": "data/uploads.list",
     "overrides": "data/overrides.json",
+    "levelzones": "data/levelzones.json",
     "tmp": "data/tmp",
     "output": "data/output",
     "endings": "data/endings",
