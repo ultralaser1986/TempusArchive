@@ -106,20 +106,8 @@ class TempusArchive {
     desc += `\n\n\nPlayer: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`
     desc += `\nDate: ${new Date(rec.date * 1000).toUTCString()}`
 
-    let zones = this.levelzones[rec.zone]
-
-    if (zones) {
-      let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
-      let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
-
-      desc += '\n\n0:00 Start'
-
-      for (let i = 0; i < boxes.length; i++) {
-        let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
-        let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
-        desc += `\n${time} Level ${i + 1}`
-      }
-    }
+    let chapters = await this.#chapters(rec)
+    if (chapters) desc += chapters
 
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,
@@ -268,6 +256,27 @@ class TempusArchive {
     util.write(files.subs, subs)
 
     return files
+  }
+
+  async #chapters (rec) {
+    let zones = this.levelzones[rec.zone]
+
+    if (zones) {
+      let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
+      let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
+
+      let desc = '\n\n0:00 Start'
+
+      for (let i = 0; i < boxes.length; i++) {
+        let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
+        let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
+        desc += `\n${time} Level ${i + 1}`
+      }
+
+      return desc
+    }
+
+    return null
   }
 
   #thumb (file, seconds) {
