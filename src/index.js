@@ -278,6 +278,8 @@ class TempusArchive {
           desc += `\n${time} Level ${i + 1}`
         }
 
+        desc += `\n${util.formatTime((rec.end / (200 / 3)) * 1000, 0)} Finish`
+
         return desc
       }
     }
