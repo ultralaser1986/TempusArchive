@@ -86,7 +86,7 @@ module.exports = {
     return this.merge(target, ...sources)
   },
   date (file) {
-    return fs.statSync(file).mtime
+    return this.exists(file) ? fs.statSync(file).mtime : 0
   },
   formatSteamID (id) {
     if (id.startsWith('STEAM_')) return id

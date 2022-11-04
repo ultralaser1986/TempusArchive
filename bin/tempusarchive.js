@@ -76,6 +76,13 @@ async function run (ids, opts) {
     }
   }
 
+  for (let list of ['records', 'uploads', 'players']) {
+    if (!util.exists(ta.cfg[list])) {
+      console.log(MEDAL, `Missing ${list} file! Updating...`)
+      await ta.update({ [list]: true })
+    }
+  }
+
   if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
     if (opts.update) {
       console.log(MEDAL, 'Updating records file...')
