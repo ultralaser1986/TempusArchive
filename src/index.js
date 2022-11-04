@@ -268,8 +268,12 @@ class TempusArchive {
       if (boxes.length) {
         let desc = '\n\n0:00 Start'
 
+        if (!boxes[0].ticks.length) boxes[0].ticks = [[rec.start]]
+
         for (let i = 0; i < boxes.length; i++) {
-          let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
+          let tick = boxes[i].ticks[0]?.[0]
+          if (!tick) continue
+          tick -= (rec.start - this.cfg.padding)
           let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
           desc += `\n${time} Level ${i + 1}`
         }
