@@ -259,21 +259,23 @@ class TempusArchive {
   }
 
   async #chapters (rec) {
-    let zones = this.levelzones[rec.zone]
+    let zones = this.levelzones[rec.map]
 
     if (zones) {
       let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
       let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
 
-      let desc = '\n\n0:00 Start'
+      if (boxes.length) {
+        let desc = '\n\n0:00 Start'
 
-      for (let i = 0; i < boxes.length; i++) {
-        let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
-        let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
-        desc += `\n${time} Level ${i + 1}`
+        for (let i = 0; i < boxes.length; i++) {
+          let tick = (boxes[i].ticks[0]?.[0] || rec.start) - (rec.start - this.cfg.padding)
+          let time = util.formatTime((tick / (200 / 3)) * 1000, 0)
+          desc += `\n${time} Level ${i + 1}`
+        }
+
+        return desc
       }
-
-      return desc
     }
 
     return null
