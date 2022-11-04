@@ -127,7 +127,7 @@ class TempusArchive {
     if (override) await this.yt.updateVideo(override, { privacyState: { newPrivacy: 'UNLISTED' } })
 
     this.uploads.add(rec.key, rec.id, vid)
-    this.uploads.export()
+    this.uploads.export(this.cfg.uploads)
 
     util.remove(this.tmp)
 
@@ -142,7 +142,7 @@ class TempusArchive {
         if (!this.players[id]) this.players[id] = { [nick.name]: true }
       }
 
-      this.players.export()
+      this.players.export(this.cfg.players)
     }
 
     if (opts.records) {
