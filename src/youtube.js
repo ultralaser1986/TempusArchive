@@ -218,13 +218,15 @@ YouTube.prototype.listVideos = async function (next) {
   }).json()
   return {
     next: body.nextPageToken,
-    items: body.videos.map(x => {
-      x.date = Number(x.timeCreatedSeconds)
-      delete x.responseStatus
-      delete x.loggingDirectives
-      delete x.timeCreatedSeconds
-      return x
-    })
+    items: body.videos
+      ? body.videos.map(x => {
+        x.date = Number(x.timeCreatedSeconds)
+        delete x.responseStatus
+        delete x.loggingDirectives
+        delete x.timeCreatedSeconds
+        return x
+      })
+      : []
   }
 }
 
