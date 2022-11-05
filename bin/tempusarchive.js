@@ -93,9 +93,8 @@ async function run (ids, opts) {
     }
 
     if (!ids.length) ids = ta.pending()
-    if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
-
     if (opts.shuffle) util.shuffleArray(ids)
+    if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
   }
 
   let start = opts.index ?? 0
