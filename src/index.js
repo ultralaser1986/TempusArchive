@@ -112,7 +112,7 @@ class TempusArchive {
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,
       description: desc,
-      visibility: 'UNLISTED', // change to PUBLIC on release
+      visibility: 'PUBLIC',
       category: this.cfg.meta.category,
       tags: [...this.cfg.meta.tags, `https://tempus.xyz/records/${rec.id}`]
     })
