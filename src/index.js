@@ -114,7 +114,7 @@ class TempusArchive {
       description: desc,
       visibility: 'PUBLIC',
       category: this.cfg.meta.category,
-      tags: [...this.cfg.meta.tags, `https://tempus.xyz/records/${rec.id}`]
+      tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
     })
 
     let thumbnail = this.#thumb(file, (this.cfg.padding / (200 / 3)) + (rec.time / 2))
