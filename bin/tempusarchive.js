@@ -17,6 +17,7 @@ program
   .description('start rendering')
   .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
   .option('-n, --max <number>', 'limit number of records to render', 0)
+  .option('-s, --shuffle', 'randomize the order of the records', false)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
   .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
   .option('-c, --continue', 'continue from previous state if exists', false)
@@ -83,15 +84,19 @@ async function run (ids, opts) {
     }
   }
 
-  if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
-    if (opts.update) {
-      console.log(MEDAL, 'Updating records file...')
-      await ta.update({ records: true })
-    } else console.log(MEDAL, 'Records file is older than a day!')
-  }
+  if (!opts.continue) {
+    if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
+      if (opts.update) {
+        console.log(MEDAL, 'Updating records file...')
+        await ta.update({ records: true })
+      } else console.log(MEDAL, 'Records file is older than a day!')
+    }
 
-  if (!ids.length) ids = ta.pending()
-  if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
+    if (!ids.length) ids = ta.pending()
+    if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
+
+    if (opts.shuffle) util.shuffleArray(ids)
+  }
 
   let start = opts.index ?? 0
 

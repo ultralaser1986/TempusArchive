@@ -110,5 +110,13 @@ module.exports = {
     let [, uni, num] = str.split(':').map(Number)
     num = (BigInt(num) * 2n) + STEAM_BASE + BigInt(uni)
     return num.toString()
+  },
+  shuffleArray (array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1))
+      let temp = array[i]
+      array[i] = array[j]
+      array[j] = temp
+    }
   }
 }
