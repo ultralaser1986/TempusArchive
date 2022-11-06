@@ -1,8 +1,0 @@
-"sky"
-{
-	"$nofog" "1"
-	"$ignorez" "1"
-	"$basetexture" "skybox/sky_skylab_01dn"
-	"$hdrbasetexture" "skybox/sky_skylab_01dn"
-	"%keywords" "tf,vfig"
-}

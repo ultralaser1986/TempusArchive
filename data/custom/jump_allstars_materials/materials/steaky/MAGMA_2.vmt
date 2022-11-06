@@ -1,9 +1,0 @@
-LightmappedGeneric
-{
-	"$basetexture" "steaky/magma_2"
-
-	"$surfaceprop" "rock"
-
-	"$selfillum" 1
-	
-}
