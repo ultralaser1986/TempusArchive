@@ -1,0 +1,21 @@
+"LightmappedGeneric"
+{
+	"$basetexture" "steaky/magma_1"
+	"$surfaceprop" "rock"
+	"$selfillum" 1
+
+
+   "Proxies"
+   {
+   	"TextureScroll"
+      		{
+         	"texturescrollvar" "$basetexturetransform"
+         	"texturescrollrate" .5
+         	"texturescrollangle" 270
+     		}
+   
+
+   }
+
+
+}

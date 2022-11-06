@@ -1,0 +1,9 @@
+"worldvertextransition"
+{
+	"$basetexture" "lavablend_1"
+	"$basetexture2" "lavablend_2"
+	"$surfaceprop" "rock"
+	"$surfaceprop2" "wade"
+	"$selfillum" 1
+	
+}
