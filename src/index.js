@@ -71,6 +71,7 @@ class TempusArchive {
       output: this.out,
       pre: this.cfg.pre,
       timed: true,
+      cubemaps: true,
       ffmpeg: {
         '!sfx': end.sfx,
         subs: end.subs,
