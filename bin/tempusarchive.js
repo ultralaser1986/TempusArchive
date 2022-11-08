@@ -92,7 +92,7 @@ async function run (ids, opts) {
       } else console.log(MEDAL, 'Records file is older than a day!')
     }
 
-    if (!ids.length) ids = ta.pending()
+    if (!ids.length) ids = ta.pending().sort()
     if (opts.shuffle) util.shuffleArray(ids)
     if (Number(opts.max) && ids.length > opts.max) ids.length = opts.max
   }
