@@ -223,6 +223,8 @@ class TempusArchive {
       if (Object.keys(status.privacy).length) console.log('Change Video Privacy:', status.privacy)
       if (Object.keys(status.update).length) console.log('Change Description Chain Id:', status.update)
 
+      util.write(this.cfg.report, JSON.stringify(status, null, 2))
+
       uploads.export(this.cfg.uploads)
       this.uploads = uploads
     }
