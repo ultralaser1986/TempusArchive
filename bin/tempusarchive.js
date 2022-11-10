@@ -135,7 +135,10 @@ async function run (ids, opts) {
 
     if (opts.upload) {
       try {
-        let vid = await ta.upload(rec, file)
+        util.log(`${MEDAL_CLOSE} Uploading...`)
+        let vid = await ta.upload(rec, file, progress => {
+          util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
+        })
         console.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>`)
         util.remove(file)
       } catch (e) {

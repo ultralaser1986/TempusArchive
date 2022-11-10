@@ -94,7 +94,7 @@ class TempusArchive {
     return file
   }
 
-  async upload (rec, file) {
+  async upload (rec, file, progress) {
     util.mkdir(this.tmp)
 
     await this.yt.updateSession()
@@ -116,7 +116,7 @@ class TempusArchive {
       visibility: this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC',
       category: this.cfg.meta.category,
       tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
-    })
+    }, progress)
 
     let thumbnail = this.#thumb(file, (this.cfg.padding / (200 / 3)) + (rec.time / 2))
 

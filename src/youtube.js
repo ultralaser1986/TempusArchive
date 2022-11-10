@@ -60,7 +60,7 @@ YouTube.prototype.updateSession = async function () {
   }
 }
 
-YouTube.prototype.uploadVideo = async function (file, meta = {}) {
+YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
   if (!fs.existsSync(file)) throw Error('Invalid file path provided')
   let video = getVideoInfo(file)
 
@@ -71,7 +71,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}) {
   let reason = res.contents?.uploadFeedbackItemRenderer?.contents[0]?.uploadStatus?.uploadStatusReason
   if (reason) throw Error(reason)
 
-  await this.sendVideoBinary(video)
+  await this.sendVideoBinary(video, progress)
 
   return res.videoId
 }
@@ -156,7 +156,7 @@ YouTube.prototype.createVideo = async function (video) {
   return body
 }
 
-YouTube.prototype.sendVideoBinary = async function (video) {
+YouTube.prototype.sendVideoBinary = async function (video, progress) {
   let stream = fs.createReadStream(video.path, { highWaterMark: CHUNK_SIZE })
   let n = 0
   let info = fs.statSync(video.path)
@@ -166,6 +166,8 @@ YouTube.prototype.sendVideoBinary = async function (video) {
       let buffer = Buffer.from(chunk)
       let IS_LAST_CHUNK = buffer.byteLength + CHUNK_SIZE * n === info.size
       let OFFSET = CHUNK_SIZE * n
+
+      if (progress) progress((buffer.byteLength + CHUNK_SIZE * n) / info.size)
 
       try {
         stream.pause()
