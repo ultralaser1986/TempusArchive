@@ -1,12 +1,16 @@
 [
     {
-        "records": [ 4398552 ],
+        "records": [
+            4398552
+        ],
         "override": {
             "skip": true
         }
     },
     {
-        "zones": [ 10988 ],
+        "zones": [
+            10988
+        ],
         "maps": [
             "jump_fear_redo",
             "jump_flashblack",
@@ -26,7 +30,12 @@
         }
     },
     {
-        "zones": [ 7789, 7791, 7793, 7795 ],
+        "zones": [
+            7789,
+            7791,
+            7793,
+            7795
+        ],
         "override": {
             "cmd": "r_renderoverlayfragment 0"
         }
