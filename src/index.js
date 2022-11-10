@@ -137,32 +137,45 @@ class TempusArchive {
 
   async update (opts = { players: true, records: true, uploads: true }) {
     if (opts.players) {
+      let num = 0
       let nicknames = await dp(this.cfg.nickdata).json()
       for (let nick of nicknames) {
         let id = util.formatSteamID(nick.steamId)
-        if (!this.players[id]) this.players[id] = { [nick.name]: true }
+        if (!this.players[id]) {
+          this.players[id] = { [nick.name]: true }
+
+          util.log(`[Players] ${this.players.name}`)
+          num++
+        }
       }
+      util.log(`[Players] Added ${num} additional nicknames! (${Object.keys(this.players).length} total)\n`)
 
       this.players.export(this.cfg.players)
     }
 
     if (opts.records) {
       let records = new ListStore()
-      for (let i = 0; i < this.cfg.max_maps; i++) {
+
+      let max = this.cfg.max_maps
+      for (let i = 0; i < max; i++) {
         let map = await tempus.getMap(i)
         if (map) {
           if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
           for (let zone of this.cfg.zones) {
-            for (let i = 0; i < map.zone_counts[zone]; i++) {
-              let rec = await tempus.getMapRecords(map.map_info.id, zone, i + 1, 1)
+            let count = map.zone_counts[zone]
+            for (let j = 0; j < count; j++) {
+              let rec = await tempus.getMapRecords(map.map_info.id, zone, j + 1, 1)
               let s = rec.results.soldier[0]
               let d = rec.results.demoman[0]
               if (s) records.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
               if (d) records.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
+
+              util.log(`[Records] ${i + 1}/${max} - ${map.map_info.name} [${zone} ${j + 1}] (${j + 1}/${count})`)
             }
           }
         }
       }
+      util.log(`[Records] Fetched ${Object.keys(records).length} records!\n`)
 
       records.export(this.cfg.records)
       this.records = records
@@ -173,8 +186,15 @@ class TempusArchive {
       let status = { dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
       let info = {}
 
+      util.log('[Uploads] Fetching videos...')
+
+      let total = 0
+
       let loopVids = async next => {
         let res = await this.yt.listVideos(next)
+
+        total += res.items.length
+        util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
           let tfclass = item.title.match(/^\[(\w)\]/)[1]
@@ -192,6 +212,8 @@ class TempusArchive {
         if (res.next) await loopVids(res.next)
       }
       await loopVids()
+
+      util.log('[Uploads] Parsing videos...')
 
       for (let key in uploads) {
         let ups = Object.values(uploads[key])
@@ -216,14 +238,15 @@ class TempusArchive {
         }
       }
 
-      if (!status.privacy.public.length) delete status.privacy.public
-      if (!status.privacy.unlisted.length) delete status.privacy.unlisted
+      util.removeEmpty(status)
 
-      if (status.dupes.length) console.log('Delete Duplicate Videos:', status.dupes)
-      if (Object.keys(status.privacy).length) console.log('Change Video Privacy:', status.privacy)
-      if (Object.keys(status.update).length) console.log('Change Description Chain Id:', status.update)
+      if (status.dupes) console.log('Delete Duplicate Videos:', status.dupes)
+      if (status.privacy) console.log('Change Video Privacy:', status.privacy)
+      if (status.update) console.log('Change Description Chain Id:', status.update)
 
-      util.write(this.cfg.report, JSON.stringify(status, null, 2))
+      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos!\n`)
+
+      if (Object.keys(status).length) util.write(this.cfg.report, JSON.stringify(status, null, 2))
 
       uploads.export(this.cfg.uploads)
       this.uploads = uploads

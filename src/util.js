@@ -124,5 +124,13 @@ module.exports = {
       array[i] = array[j]
       array[j] = temp
     }
+  },
+  removeEmpty (x) {
+    Object.keys(x).forEach(key => {
+      if (x[key] && typeof x[key] === 'object') this.removeEmpty(x[key])
+      else if (x[key] === undefined || x[key] === null) delete x[key]
+      if (typeof x[key] === 'object' && Object.keys(x[key]).length === 0 && !(x[key] instanceof Date)) delete x[key]
+    })
+    return x
   }
 }
