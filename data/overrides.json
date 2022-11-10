@@ -30,5 +30,13 @@
         "override": {
             "cmd": "r_renderoverlayfragment 0"
         }
+    },
+    {
+        "maps": [
+            "jump_ring2"
+        ],
+        "override": {
+            "cmd": "mat_specular 0"
+        }
     }
 ]
