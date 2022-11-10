@@ -16,7 +16,8 @@
     "max_maps": 800,
     "new_map_wait": 604800000, 
     "record_update_wait":  72000000,
-    "zones": ["bonus", "trick", "course"],
+    "zones": ["map", "bonus", "trick", "course"],
+    "unlisted": ["map"],
     "padding": 200,
     "pre": 300,
     "meta": {

@@ -113,7 +113,7 @@ class TempusArchive {
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,
       description: desc,
-      visibility: 'PUBLIC',
+      visibility: this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC',
       category: this.cfg.meta.category,
       tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
     })
