@@ -123,7 +123,7 @@ async function run (ids, opts) {
     try {
       file = await ta.record(rec, 'default')
     } catch (e) {
-      console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
+      console.log('\n', MEDAL_CLOSE, 'Error during record! Aborting process...')
       console.error(e)
       return
     }
@@ -139,10 +139,10 @@ async function run (ids, opts) {
         let vid = await ta.upload(rec, file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
         })
-        console.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>`)
+        util.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>\n`)
         util.remove(file)
       } catch (e) {
-        console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
+        console.log('\n', MEDAL_CLOSE, 'Error during upload! Aborting process...')
         console.error(e)
         return
       }
