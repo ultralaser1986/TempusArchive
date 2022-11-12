@@ -1,8 +1,8 @@
 let puppeteer = require('puppeteer-extra')
 puppeteer.use(require('puppeteer-extra-plugin-stealth')())
 
-async function getSessionRisk (cookies) {
-  cookies = Object.entries(cookies).map(x => {
+async function getSessionRisk (keys) {
+  let cookies = Object.entries(keys.cookies).map(x => {
     return { name: x[0], value: x[1], domain: '.youtube.com' }
   })
 
@@ -26,7 +26,7 @@ async function getSessionRisk (cookies) {
     })
   })
 
-  await page.goto('https://studio.youtube.com/channel/my/editing/details')
+  await page.goto(`https://studio.youtube.com/channel/${keys.channelId || 'my'}/editing/details`)
 
   try { await page.waitForSelector('#textbox') } catch (e) { }
 

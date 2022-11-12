@@ -69,9 +69,9 @@ function YouTube (keyfile) {
 
 YouTube.prototype.updateSession = async function () {
   let check = await this.updateVideo('00000000000').catch(e => e.code === 403)
-  if (!check) {
+  if (check === false) {
     let keys = JSON.parse(fs.readFileSync(this.file))
-    this.keys.session = keys.sessionInfo = await risk(keys.cookies)
+    this.keys.session = keys.sessionInfo = await risk(keys)
     fs.writeFileSync(this.file, JSON.stringify(keys, null, 2))
   }
 }
