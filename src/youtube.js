@@ -49,6 +49,11 @@ function YouTube (keyfile) {
     authorization: `SAPISIDHASH ${getSAPSIDHASH(keys.cookies.SAPISID)}`,
     session: keys.sessionInfo
   }
+
+  this.context = {
+    client: { clientName: 62, clientVersion: '1.11111111' },
+    request: { sessionInfo: { token: this.keys.session } }
+  }
 }
 
 YouTube.prototype.updateSession = async function () {
@@ -90,11 +95,8 @@ YouTube.prototype.updateVideo = async function (vid, data) {
       },
       data: {
         encryptedVideoId: vid,
-        ...data,
-        context: {
-          client: { clientName: 62, clientVersion: '1.11111111' },
-          request: { sessionInfo: { token: this.keys.session } }
-        }
+        context: this.context,
+        ...data
       }
     })
   } catch (e) { throw JSON.parse(e.body).error }
@@ -147,10 +149,7 @@ YouTube.prototype.createVideo = async function (video) {
         }
       },
       frontendUploadId: video.id,
-      context: {
-        client: { clientName: 62, clientVersion: '1.11111111' },
-        request: { sessionInfo: { token: this.keys.session } }
-      }
+      context: this.context
     }
   }).json()
   return body
@@ -205,16 +204,14 @@ YouTube.prototype.listVideos = async function (next) {
     },
     data: {
       pageSize: 100,
-      context: {
-        client: { clientName: 62, clientVersion: '1.11111111' }
-      },
       mask: {
         title: true,
         description: true,
         privacy: true,
         timeCreatedSeconds: true
       },
-      pageToken: next
+      pageToken: next,
+      context: this.context
     },
     type: 'json'
   }).json()
@@ -247,10 +244,7 @@ YouTube.prototype.deleteVideos = async function (ids) {
       },
       data: {
         videos: { videoIds: ids },
-        context: {
-          client: { clientName: 62, clientVersion: '1.11111111' },
-          request: { sessionInfo: { token: this.keys.session } }
-        }
+        context: this.context
       }
     })
   } catch (e) {
@@ -274,10 +268,7 @@ YouTube.prototype.deleteVideo = async function (id) {
       },
       data: {
         videoId: id,
-        context: {
-          client: { clientName: 62, clientVersion: '1.11111111' },
-          request: { sessionInfo: { token: this.keys.session } }
-        }
+        context: this.context
       }
     }).json()
     return res.success
