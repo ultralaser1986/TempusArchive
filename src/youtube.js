@@ -39,6 +39,10 @@ function getVideoInfo (file) {
   }
 }
 
+function getSerializedDelegationContext (channel) {
+  return Buffer.from([0x12, channel.length, ...Buffer.from(channel), 0x2a, 0x02, 0x08, 0x02]).toString('base64')
+}
+
 function YouTube (keyfile) {
   this.file = ph.resolve(keyfile)
 
@@ -47,12 +51,19 @@ function YouTube (keyfile) {
   this.keys = {
     cookies: `CONSENT=YES+cb;${Object.entries(keys.cookies).map(x => x.join('=')).join(';')};`,
     authorization: `SAPISIDHASH ${getSAPSIDHASH(keys.cookies.SAPISID)}`,
-    session: keys.sessionInfo
+    session: keys.sessionInfo,
+    channel: keys.channelId
   }
 
   this.context = {
     client: { clientName: 62, clientVersion: '1.11111111' },
     request: { sessionInfo: { token: this.keys.session } }
+  }
+
+  if (this.keys.channel) {
+    this.context.user = {
+      serializedDelegationContext: getSerializedDelegationContext(this.keys.channel)
+    }
   }
 }
 
@@ -135,6 +146,7 @@ YouTube.prototype.createVideo = async function (video) {
       Authorization: this.keys.authorization
     },
     data: {
+      channelId: this.keys.channel,
       initialMetadata: {
         title: { newTitle: video.title },
         description: { newDescription: video.description },
