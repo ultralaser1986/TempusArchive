@@ -159,6 +159,6 @@ KILLERS.forEach(killer => process.on(killer, () => {
   try {
     util.remove(ta.tmp)
     if (ta.tr.app) ta.exit(true)
-    process.exit()
+    if (killer !== 'exit') process.exit()
   } catch (e) {}
 }))
