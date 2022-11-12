@@ -197,10 +197,13 @@ class TempusArchive {
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
-          let tfclass = item.title.match(/^\[(\w)\]/)[1]
-          let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
+          let tfclass = item.title.match(/^\[(\w)\]/)
+          if (!tfclass) throw Error(`Video ${item.videoId} has invalid title: ${item.title}`)
 
-          let key = `${tfclass}_${zone}`
+          let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
+          if (!record || !zone) throw Error(`Video ${item.videoId} has invalid description: ${item.title}`)
+
+          let key = `${tfclass[1]}_${zone}`
 
           if (uploads[key]?.[record]) status.dupes.push(item.videoId)
           else {
