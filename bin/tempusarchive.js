@@ -139,7 +139,7 @@ async function run (ids, opts) {
         let vid = await ta.upload(rec, file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
         })
-        util.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>\n`)
+        console.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>`)
         util.remove(file)
       } catch (e) {
         console.log('\n', MEDAL_CLOSE, 'Error during upload! Aborting process...')
