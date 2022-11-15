@@ -156,22 +156,21 @@ class TempusArchive {
     if (opts.records) {
       let records = new ListStore()
 
-      let max = this.cfg.max_maps
-      for (let i = 0; i < max; i++) {
-        let map = await tempus.getMap(i)
-        if (map) {
-          if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
-          for (let zone of this.cfg.zones) {
-            let count = map.zone_counts[zone]
-            for (let j = 0; j < count; j++) {
-              let rec = await tempus.getMapRecords(map.map_info.id, zone, j + 1, 1)
-              let s = rec.results.soldier[0]
-              let d = rec.results.demoman[0]
-              if (s) records.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
-              if (d) records.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
+      let maps = await tempus.getMapList()
 
-              util.log(`[Records] ${i + 1}/${max} - ${map.map_info.name} [${zone} ${j + 1}] (${j + 1}/${count})`)
-            }
+      for (let i = 0; i < maps.length; i++) {
+        let map = maps[i]
+        // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
+        for (let zone of this.cfg.zones) {
+          let count = map.zone_counts[zone]
+          for (let j = 0; j < count; j++) {
+            let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
+            let s = rec.results.soldier[0]
+            let d = rec.results.demoman[0]
+            if (s) records.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
+            if (d) records.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
+
+            util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${count})`)
           }
         }
       }
