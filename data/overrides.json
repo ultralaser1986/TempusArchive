@@ -1,6 +1,14 @@
 [
     {
         "records": [
+            2095342
+        ],
+        "override": {
+            "cmd": "spec_player \"STEAM_0:0:115234\""
+        }
+    },
+    {
+        "records": [
             4398552
         ],
         "override": {
