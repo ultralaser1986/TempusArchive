@@ -52,10 +52,16 @@ class TempusArchive {
     return rec
   }
 
-  async record (rec, type = 'default') {
+  async record (rec, endingStyle = 'default', splitStyle = 'default') {
     util.mkdir(this.tmp)
 
-    let end = await this.#ending(rec.time, rec.improvement, type, this.tmp)
+    let end = await this.#ending(rec.time, rec.improvement, endingStyle, this.tmp)
+
+    if (rec.z.type === 'map') {
+      let splits = await this.#splits(rec.map, rec.id, splitStyle, this.tmp)
+      if (splits) end.subs = this.#merge(end.subs, splits)
+      else console.log(`Record ${rec.id} is not a WR! Skipping splits.`)
+    }
 
     let cmds = ['r_cleardecals']
 
@@ -255,9 +261,8 @@ class TempusArchive {
     }
   }
 
-  async #ending (time, improvement, type, out) {
-    let dir = util.join(this.cfg.endings, type)
-
+  async #ending (time, improvement, style, out) {
+    let dir = util.join(this.cfg.endings, style)
     let subs = util.read(util.join(dir, this.cfg.subs), 'utf-8')
 
     let pad = this.cfg.padding / (200 / 3)
@@ -277,13 +282,57 @@ class TempusArchive {
       .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
 
     let files = {
-      subs: util.join(out, this.cfg.subs),
+      subs: util.join(out, 'ending-' + this.cfg.subs),
       sfx: util.join(dir, this.cfg.sfx)
     }
 
     util.write(files.subs, subs)
 
     return files
+  }
+
+  async #splits (map, id, style, out) {
+    let wrs = await tempus.getMapWRS(map)
+    let splits = Object.values(wrs).find(x => x.wr.id === id)?.wr?.splits
+    if (!splits) return null
+
+    let dir = util.join(this.cfg.splits, style)
+    let subs = util.read(util.join(dir, this.cfg.subs), 'utf-8').replaceAll('\r\n', '\n')
+
+    let template = (subs.match(/^Dialogue:.*/gm) || []).join('\n')
+
+    let pad = this.cfg.padding / (200 / 3)
+    let t = x => new Date(x * 1000).toISOString().slice(11, -2)
+
+    let points = []
+
+    for (let split of splits) {
+      let name = split.type[0].toUpperCase() + split.type.slice(1) + ' ' + split.zoneindex
+      let time = split.duration
+      let improvement = (split.duration - split.compared_duration)
+
+      let primary = util.formatTime(time * 1000)
+      let secondary = util.formatTime(improvement * 1000, Math.abs(improvement) < 0.001 ? 4 : 3) || ''
+      let [pri, mary] = primary.split('.')
+      let [secon, dary] = secondary.split('.')
+
+      if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
+
+      points.push(
+        template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
+          .replaceAll('%NAME%', name)
+          .replaceAll('%PRIMARY%', primary).replaceAll('%PRI%', pri).replaceAll('%MARY%', mary)
+          .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
+      )
+    }
+
+    subs = subs.replace(template, points.join('\n'))
+
+    let dest = util.join(out, 'splits-' + this.cfg.subs)
+
+    util.write(dest, subs)
+
+    return dest
   }
 
   async #chapters (rec) {
@@ -319,6 +368,41 @@ class TempusArchive {
     let path = util.join(this.tmp, this.cfg.thumb)
     util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
     return 'data:image/png;base64,' + util.read(path, 'base64')
+  }
+
+  #merge (source, target) {
+    let o = {
+      s: util.read(source, 'utf-8').replaceAll('\r\n', '\n'),
+      t: util.read(target, 'utf-8').replaceAll('\r\n', '\n')
+    }
+
+    for (let part in o) {
+      let styles = (o[part].match(/^Style: (.*?),/gm) || []).map(x => x.slice(7, -1))
+      for (let style of styles) {
+        let regex = new RegExp(`(?<=(,| ))${style},`, 'g')
+        o[part] = o[part].replace(regex, `${part}-$&`)
+      }
+    }
+
+    for (let part of ['Style', 'Dialogue']) {
+      let regex = new RegExp(`^${part}:.*`, 'gm')
+
+      let pointer = o.s.indexOf('\n', o.s.lastIndexOf(part + ':'))
+      if (!o.s.match(regex)) {
+        if (part === 'Style') pointer = o.s.indexOf('[V4+ Styles]')
+        else if (part === 'Dialogue') pointer = o.s.indexOf('[Events]')
+
+        pointer = o.s.indexOf('\n', o.s.indexOf('\n', pointer) + 1)
+      }
+
+      let match = o.t.match(regex)
+      if (match) o.s = o.s.slice(0, pointer + 1) + match.join('\n') + o.s.slice(pointer)
+    }
+
+    let out = util.join(source, '..', 'merged-subs.ass')
+
+    util.write(out, o.s)
+    return out
   }
 }
 

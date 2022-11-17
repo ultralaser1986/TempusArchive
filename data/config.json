@@ -9,6 +9,7 @@
     "tmp": "data/tmp",
     "output": "data/output",
     "endings": "data/endings",
+    "splits": "data/splits",
     "thumb": "thumb.png",
     "subs": "subs.ass",
     "sfx": "sfx.wav",

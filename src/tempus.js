@@ -29,5 +29,8 @@ module.exports = {
     title += ` - ${time}`
 
     return title
+  },
+  async getMapWRS (map) {
+    return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)
   }
 }

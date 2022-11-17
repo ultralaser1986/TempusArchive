@@ -121,7 +121,7 @@ async function run (ids, opts) {
     let file = null
 
     try {
-      file = await ta.record(rec, 'default')
+      file = await ta.record(rec, 'default', 'default')
     } catch (e) {
       console.log('\n', MEDAL_CLOSE, 'Error during record! Aborting process...')
       console.error(e)
