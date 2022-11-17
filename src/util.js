@@ -13,6 +13,11 @@ module.exports = {
   },
   formatTime (ms, decimals = 3) {
     if (!ms) return null
+    let invert = false
+    if (ms < 0) {
+      invert = true
+      ms = Math.abs(ms)
+    }
     ms = ms / 1000
     let s = Math.floor(ms % 60)
     let m = Math.floor(ms / 60 % 60)
@@ -24,7 +29,7 @@ module.exports = {
       return (i !== 0 && x < 10 && x !== '00') ? '0' + x : x
     })
     ms = ms.toString()
-    return t.join(':') + (decimals ? ms.substr(ms.indexOf('.'), decimals + 1) : '')
+    return (invert ? '-' : '') + t.join(':') + (decimals ? ms.substr(ms.indexOf('.'), decimals + 1) : '')
   },
   maxLen (str, len) {
     if (str.length > len) str = str.slice(0, len - 3).trim() + '...'
