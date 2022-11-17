@@ -313,6 +313,8 @@ class TempusArchive {
 
       let primary = util.formatTime(time * 1000)
       let secondary = util.formatTime(improvement * 1000, Math.abs(improvement) < 0.001 ? 4 : 3) || ''
+      if (improvement >= 0) secondary = '+' + secondary
+
       let [pri, mary] = primary.split('.')
       let [secon, dary] = secondary.split('.')
 
