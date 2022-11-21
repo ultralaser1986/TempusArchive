@@ -73,7 +73,9 @@ YouTube.prototype.updateSession = async function () {
     let keys = JSON.parse(fs.readFileSync(this.file))
     this.keys.session = keys.sessionInfo = await risk(keys)
     fs.writeFileSync(this.file, JSON.stringify(keys, null, 2))
+    return false
   }
+  return true
 }
 
 YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {

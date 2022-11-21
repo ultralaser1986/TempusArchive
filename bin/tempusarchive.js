@@ -61,6 +61,15 @@ program
   })
 
 program
+  .command('check')
+  .description('check if keys.json is valid')
+  .action(async () => {
+    ta.tr.init()
+    let out = await ta.yt.updateSession()
+    console.log(out)
+  })
+
+program
   .name('tempusarchive')
   .parse()
 
