@@ -10,11 +10,11 @@ module.exports = {
   async getMapRecords (id, zone, index, limit = 1) {
     return await dp(base + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
   },
-  async getImprovementFromRecord (rec) {
+  async getDiffFromRecord (rec) {
     let c = rec.class === 'S' ? 'soldier' : 'demoman'
     let m = await this.getMapRecords(rec.z.map, rec.z.type, rec.z.index, 100)
-    let w = m.results[c].slice(1).find(x => x.duration > rec.time)
-    return w ? (w.duration - rec.time) : 0
+    let w = rec.rank !== 1 ? m.results[c][0] : m.results[c].slice(1).find(x => x.duration > rec.time)
+    return w ? (rec.time - w.duration) : 0
   },
   async formatDisplay (rec, nick) {
     let type = rec.z.type

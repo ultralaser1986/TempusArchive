@@ -43,7 +43,7 @@ class TempusArchive {
   async fetch (id) {
     let rec = await TemRec.fetch(id)
     rec.key = `${rec.class}_${rec.zone}`
-    rec.improvement = await tempus.getImprovementFromRecord(rec)
+    rec.diff = await tempus.getDiffFromRecord(rec)
 
     let nick = this.players[rec.player]
     if (nick) nick = Object.keys(nick)[0]
@@ -55,7 +55,7 @@ class TempusArchive {
   async record (rec, endingStyle = 'default', splitStyle = 'default') {
     util.mkdir(this.tmp)
 
-    let end = await this.#ending(rec.time, rec.improvement, endingStyle, this.tmp)
+    let end = await this.#ending(rec.time, rec.diff, endingStyle, this.tmp)
 
     if (rec.z.type === 'map') {
       let splits = await this.#splits(rec.map, rec.id, splitStyle, this.tmp)
@@ -261,7 +261,7 @@ class TempusArchive {
     }
   }
 
-  async #ending (time, improvement, style, out) {
+  async #ending (time, diff, style, out) {
     let dir = util.join(this.cfg.endings, style)
     let subs = util.read(util.join(dir, this.cfg.subs), 'utf-8')
 
@@ -270,8 +270,8 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let primary = util.formatTime(time * 1000)
-    let secondary = util.formatTime(improvement * 1000, Math.abs(improvement) < 0.001 ? 4 : 3) || ''
-    if (secondary && improvement >= 0) secondary = '+' + secondary
+    let secondary = util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) || ''
+    if (secondary && diff >= 0) secondary = '+' + secondary
 
     let [pri, mary] = primary.split('.')
     let [secon, dary] = secondary.split('.')
@@ -311,11 +311,11 @@ class TempusArchive {
     for (let split of splits) {
       let name = split.type[0].toUpperCase() + split.type.slice(1) + ' ' + split.zoneindex
       let time = split.duration
-      let improvement = (split.duration - split.compared_duration)
+      let diff = (split.duration - split.compared_duration)
 
       let primary = util.formatTime(time * 1000)
-      let secondary = util.formatTime(improvement * 1000, Math.abs(improvement) < 0.001 ? 4 : 3) || ''
-      if (secondary && improvement >= 0) secondary = '+' + secondary
+      let secondary = util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) || ''
+      if (secondary && diff >= 0) secondary = '+' + secondary
 
       let [pri, mary] = primary.split('.')
       let [secon, dary] = secondary.split('.')
