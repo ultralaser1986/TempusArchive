@@ -13,4 +13,4 @@ Style: Box,Handgoal,100,&HDE00D8FF,&H000000FF,&H00000000,&H00000000,0,0,0,0,1000
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,%TIME%,%TIME[+1]%,Box,,0,0,0,,{\fad(10,1000)\p1\fscx2000\fscy2000\pos(1000,1100)}m 0 0 l 100 0 100 100 0 100{\p0}
 Dialogue: 0,%TIME%,%TIME[+3]%,Primary,,0,0,0,,{\be50\fscx400\fscy400\fad(100,0)\t(0,200,0.5,\fscx500\fscy500)\t(200,3000,\fscx550\fscy550)}%PRIMARY%
-Dialogue: 0,%TIME[+0.05]%,%TIME[+3]%,Secondary,,0,0,0,,{\be50\fscx400\fscy400\fad(100,0)\t(0,200,0.5,\fscx500\fscy500)\t(200,3000,\fscx550\fscy550)}\N\N\N\N\N\N-%SECONDARY%
+Dialogue: 0,%TIME[+0.05]%,%TIME[+3]%,Secondary,,0,0,0,,{\be50\fscx400\fscy400\fad(100,0)\t(0,200,0.5,\fscx500\fscy500)\t(200,3000,\fscx550\fscy550)}\N\N\N\N\N\N%SECONDARY%
