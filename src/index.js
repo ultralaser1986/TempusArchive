@@ -136,7 +136,17 @@ class TempusArchive {
     this.uploads.add(rec.key, rec.id, vid)
     this.uploads.export(this.cfg.uploads)
 
-    util.remove(this.tmp)
+    if (util.exists(this.cfg.velo)) {
+      await this.yt.addCaptions(vid, [
+        this.#captions(this.cfg.velo, rec, 0, ''), // Timer
+        this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
+        this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
+        this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
+        this.#captions(this.cfg.velo, rec, 4, 'Demo Tick')
+      ])
+    }
+
+    util.remove([this.tmp, this.cfg.velo])
 
     return vid
   }
@@ -366,6 +376,63 @@ class TempusArchive {
     }
 
     return null
+  }
+
+  #captions (file, rec, method, name) {
+    let lines = util.read(file, 'utf-8').split(/\r?\n/)
+    let caps = util.read(util.join(this.cfg.captions, 'default', 'subs.ytt'), 'utf-8')
+
+    let template = caps.match(/<p .*<\/p>/)[0]
+
+    let parts = []
+
+    let range = [rec.start - this.cfg.padding, rec.end + this.cfg.padding]
+
+    let ms = x => ((x - range[0]) / (200 / 3)) * 1000
+
+    let act = {
+      0: (tick) => {
+        let t = tick - rec.start
+        if (tick > rec.end) t = rec.end - rec.start
+        return util.formatTime((t / (200 / 3)) * 1000, 2)
+      },
+      1: (tick, x, y, z) => {
+        let vel = Math.sqrt(x * x + y * y) + 0.5
+        return vel > 3500 ? 3500 : Math.floor(vel)
+      },
+      2: (tick, x, y, z) => {
+        let vel = Math.abs(z) + 0.5
+        return vel > 3500 ? 3500 : Math.floor(vel)
+      },
+      3: (tick, x, y, z) => {
+        let vel = Math.sqrt(x * x + y * y + z * z) + 0.5
+        return Math.floor(vel)
+      },
+      4: (tick) => {
+        return tick
+      }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      let [tick, x, y, z] = lines[i].split(' ').map(Number)
+
+      if (tick < range[0] || tick > range[1]) continue
+
+      let start = ms(tick)
+      let next = lines[i + 1] ? ms(Number(lines[i + 1].split(' ')[0])) : 100
+
+      parts.push(template
+        .replace('%START%', Math.floor(start))
+        .replace('%TIME%', Math.ceil(next - start))
+        .replace('%TEXT%', act[method](tick, x, y, z))
+      )
+    }
+
+    return {
+      name,
+      lang: 'en',
+      buffer: Buffer.from(caps.replace(template, parts.join('\n')))
+    }
   }
 
   #thumb (file, seconds) {

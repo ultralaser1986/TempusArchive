@@ -43,7 +43,7 @@ program
   .description('delete leftover temporary files')
   .action(() => {
     ta.tr.init()
-    util.remove(ta.cfg.state)
+    util.remove([ta.cfg.state, ta.cfg.report, ta.cfg.velo])
   })
 
 program

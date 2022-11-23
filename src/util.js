@@ -34,7 +34,7 @@ module.exports = {
       return (i !== 0 && x < 10 && x !== '00') ? '0' + x : x
     })
 
-    if (decimals) ms = (ms % 1).toString()
+    if (decimals) ms = (ms % 1).toString() + '0'.repeat(decimals)
 
     return (invert ? '-' : '') + t.join(':') + (decimals ? ms.substr(ms.indexOf('.'), decimals + 1) : '')
   },

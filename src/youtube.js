@@ -4,6 +4,8 @@ let ph = require('path')
 let crypto = require('crypto')
 let risk = require('./risk')
 
+let util = require('./util')
+
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 let CHUNK_SIZE = 262144 * 20
@@ -286,6 +288,52 @@ YouTube.prototype.deleteVideo = async function (id) {
       }
     }).json()
     return res.success
+  } catch (e) {
+    throw Error(e)
+  }
+}
+
+YouTube.prototype.addCaptions = async function (id, captions) {
+  if (!Array.isArray(captions)) captions = [captions]
+  try {
+    let ops = []
+
+    let debugTotal = 0
+
+    for (let cap of captions) {
+      ops.push({
+        captionsFile: {
+          dataUri: 'data:application/octet-stream;base64,' + cap.buffer.toString('base64')
+        },
+        ttsTrackId: { lang: cap.lang, name: cap.name },
+        isContentEdited: false,
+        userIntent: 'USER_INTENT_EDIT_LATEST_DRAFT',
+        vote: 'VOTE_PUBLISH'
+      })
+
+      debugTotal += ops.at(-1).captionsFile.dataUri.length
+    }
+
+    console.log('\n[DEBUG] Total Size Of Captions:', util.formatBytes(debugTotal))
+
+    let res = await dp.post('https://studio.youtube.com/youtubei/v1/globalization/update_captions', {
+      query: {
+        alt: 'json',
+        key: INNERTUBE_KEY
+      },
+      headers: {
+        'x-origin': 'https://studio.youtube.com',
+        cookie: this.keys.cookies,
+        Authorization: this.keys.authorization
+      },
+      data: {
+        context: this.context,
+        videoId: id,
+        channelId: this.keys.channel,
+        operations: ops
+      }
+    })
+    return res.headers.statusCode
   } catch (e) {
     throw Error(e)
   }
