@@ -65,8 +65,7 @@ program
   .description('check if keys.json is valid')
   .action(async () => {
     ta.tr.init()
-    let out = await ta.yt.updateSession()
-    console.log(out)
+    console.log(await ta.yt.updateSession())
   })
 
 program
