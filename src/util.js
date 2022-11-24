@@ -30,13 +30,9 @@ module.exports = {
     else if (!m) m = '00'
     if (!s) s = '00'
 
-    let t = [h, m, s].filter(x => x !== null).map((x, i, a) => {
-      return (i !== 0 && x < 10 && x !== '00') ? '0' + x : x
-    })
+    let t = [h, m, s].filter(x => x !== null).map((x, i) => (i !== 0 && x < 10 && x !== '00') ? '0' + x : x)
 
-    if (decimals) ms = (ms % 1).toString() + '0'.repeat(decimals)
-
-    return (invert ? '-' : '') + t.join(':') + (decimals ? ms.substr(ms.indexOf('.'), decimals + 1) : '')
+    return (invert ? '-' : '') + t.join(':') + (decimals ? '.' + (ms % 1).toFixed(decimals).slice(2) : '')
   },
   maxLen (str, len) {
     if (str.length > len) str = str.slice(0, len - 3).trim() + '...'
