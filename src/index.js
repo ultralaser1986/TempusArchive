@@ -419,11 +419,11 @@ class TempusArchive {
       if (tick < range[0] || tick > range[1]) continue
 
       let start = ms(tick)
-      let next = lines[i + 1] ? ms(Number(lines[i + 1].split(' ')[0])) : 100
+      let next = lines[i + 1] ? ms(Number(lines[i + 1].split(' ')[0])) : null
 
       parts.push(template
         .replace('%START%', Math.floor(start))
-        .replace('%TIME%', Math.ceil(next - start))
+        .replace('%TIME%', next ? Math.ceil(next - start) : 100)
         .replace('%TEXT%', act[method](tick, x, y, z))
       )
     }
