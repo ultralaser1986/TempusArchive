@@ -13,6 +13,7 @@ Style: Text,TYPOGRAPH PRO Extra Bold,50,&H00FFFFFF,&H000000FF,&H96000000,&H7B000
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 0,%TIME%,%TIME[+3]%,Text,,0,0,0,,{\fad(100,200)\fscx50\fscy50\t(0,3000,0.1,\fscx100\fscy100)}%NAME%
-Dialogue: 0,%TIME%,%TIME[+3]%,Primary,,0,0,0,,{\fad(100,200)\fscx50\fscy50\t(0,3000,0.1,\fscx100\fscy100)}%PRI%{\fsp-42}{\fsp\fscx35\fscy35\t(0,3000,0.1,\fscx70\fscy70)}.%MARY%
-Dialogue: 0,%TIME%,%TIME[+3]%,Secondary,,0,0,0,,{\fad(100,200)\fscx50\fscy50\t(0,3000,0.1,\fscx100\fscy100)}%SECON%{\fsp-22}{\fsp\fscx35\fscy35\t(0,3000,0.1,\fscx70\fscy70)}.%DARY%
+Dialogue: 0,%TIME%,%TIME[+3]%,Text,,0,0,0,,{\fad(100,200)\fscx70\fscy70}%NAME%
+Dialogue: 0,%TIME%,%TIME[+3]%,Primary,,0,0,0,,{\fad(100,200)\fscx100\fscy100}%PRI%{\fsp-28}{\fsp\fscx70\fscy70\t}.%MARY%
+Dialogue: 0,%TIME%,%TIME[+3]%,Secondary,,0,0,0,,{\fad(100,200)\fscx100\fscy100)}%SECON%{\fsp\fscx70\fscy70)}.%DARY%
+
