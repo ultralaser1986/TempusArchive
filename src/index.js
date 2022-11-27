@@ -129,7 +129,9 @@ class TempusArchive {
       tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
     }, progress)
 
-    let thumbnail = this.#thumb(file, (this.cfg.padding / (200 / 3)) + (rec.time / 2))
+    let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
+    if (rec.splits) time = rec.splits[0].duration - 0.1
+    let thumbnail = this.#thumb(file, time)
 
     await this.yt.updateVideo(vid, {
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
