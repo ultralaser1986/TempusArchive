@@ -46,6 +46,11 @@ class TempusArchive {
     rec.key = `${rec.class}_${rec.zone}`
     rec.diff = await tempus.getDiffFromRecord(rec)
 
+    if (rec.rank === 1 && rec.z.type === 'map') {
+      let wrs = await tempus.getMapWRS(rec.map)
+      rec.splits = Object.values(wrs).find(x => x.wr.id === id)?.wr?.splits
+    }
+
     let nick = this.players[rec.player]
     if (nick) nick = Object.keys(nick)[0]
 
@@ -58,10 +63,9 @@ class TempusArchive {
 
     let end = await this.#ending(rec.time, rec.diff, endingStyle, this.tmp)
 
-    if (rec.z.type === 'map') {
-      let splits = await this.#splits(rec.map, rec.id, splitStyle, this.tmp)
-      if (splits) end.subs = this.#merge(end.subs, splits)
-      else console.log(`Record ${rec.id} is not a WR! Skipping splits.`)
+    if (rec.splits) {
+      let splits = await this.#splits(rec.splits, splitStyle, this.tmp)
+      end.subs = this.#merge(end.subs, splits)
     }
 
     let cmds = ['r_cleardecals']
@@ -304,11 +308,7 @@ class TempusArchive {
     return files
   }
 
-  async #splits (map, id, style, out) {
-    let wrs = await tempus.getMapWRS(map)
-    let splits = Object.values(wrs).find(x => x.wr.id === id)?.wr?.splits
-    if (!splits) return null
-
+  async #splits (splits, style, out) {
     let dir = util.join(this.cfg.splits, style)
     let subs = util.read(util.join(dir, this.cfg.subs), 'utf-8').replaceAll('\r\n', '\n')
 
