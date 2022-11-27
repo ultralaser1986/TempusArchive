@@ -49,7 +49,7 @@ class TempusArchive {
     let nick = this.players[rec.player]
     if (nick) nick = Object.keys(nick)[0]
 
-    rec.display = await tempus.formatDisplay(rec, nick)
+    rec.display = tempus.formatDisplay(rec, nick)
     return rec
   }
 

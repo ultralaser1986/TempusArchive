@@ -16,7 +16,7 @@ module.exports = {
     let w = rec.rank !== 1 ? m.results[c][0] : m.results[c].slice(1).find(x => x.duration > rec.time)
     return w ? (rec.time - w.duration) : 0
   },
-  async formatDisplay (rec, nick) {
+  formatDisplay (rec, nick) {
     let type = rec.z.type
     if (type === 'map') type = ''
     else type = `${type[0].toUpperCase()}${type.slice(1)} ${rec.z.index}`
