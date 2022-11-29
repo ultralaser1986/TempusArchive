@@ -57,14 +57,11 @@ function YouTube (keyfile) {
     channel: keys.channelId
   }
 
-  this.context = {
-    client: { clientName: 62, clientVersion: '1.11111111' },
-    request: { sessionInfo: { token: this.keys.session } }
-  }
-
-  if (this.keys.channel) {
-    this.context.user = {
-      serializedDelegationContext: getSerializedDelegationContext(this.keys.channel)
+  this.context = () => {
+    return {
+      client: { clientName: 62, clientVersion: '1.11111111' },
+      request: { sessionInfo: { token: this.keys.session } },
+      user: { serializedDelegationContext: getSerializedDelegationContext(this.keys.channel) }
     }
   }
 }
@@ -110,7 +107,7 @@ YouTube.prototype.updateVideo = async function (vid, data) {
       },
       data: {
         encryptedVideoId: vid,
-        context: this.context,
+        context: this.context(),
         ...data
       }
     })
@@ -165,7 +162,7 @@ YouTube.prototype.createVideo = async function (video) {
         }
       },
       frontendUploadId: video.id,
-      context: this.context
+      context: this.context()
     }
   }).json()
   return body
@@ -227,7 +224,7 @@ YouTube.prototype.listVideos = async function (next) {
         timeCreatedSeconds: true
       },
       pageToken: next,
-      context: this.context
+      context: this.context()
     },
     type: 'json'
   }).json()
@@ -260,7 +257,7 @@ YouTube.prototype.deleteVideos = async function (ids) {
       },
       data: {
         videos: { videoIds: ids },
-        context: this.context
+        context: this.context()
       }
     })
   } catch (e) {
@@ -284,7 +281,7 @@ YouTube.prototype.deleteVideo = async function (id) {
       },
       data: {
         videoId: id,
-        context: this.context
+        context: this.context()
       }
     }).json()
     return res.success
@@ -327,7 +324,7 @@ YouTube.prototype.addCaptions = async function (id, captions) {
         Authorization: this.keys.authorization
       },
       data: {
-        context: this.context,
+        context: this.context(),
         videoId: id,
         channelId: this.keys.channel,
         operations: ops
