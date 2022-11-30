@@ -124,7 +124,7 @@ class TempusArchive {
     if (chapters) desc += chapters
 
     let vid = await this.yt.uploadVideo(file, {
-      title: rec.display,
+      title: (single ? '! ' : '') + rec.display,
       description: desc,
       visibility: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
       category: this.cfg.meta.category,
@@ -215,6 +215,7 @@ class TempusArchive {
       util.log('[Uploads] Fetching videos...')
 
       let total = 0
+      let skip = 0
 
       let loopVids = async next => {
         let res = await this.yt.listVideos(next)
@@ -223,6 +224,11 @@ class TempusArchive {
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
+          if (item.title[0] === '!') {
+            skip++
+            continue
+          }
+
           let tfclass = item.title.match(/^\[(\w)\]/)
           if (!tfclass) throw Error(`Video ${item.videoId} has invalid title: ${item.title}`)
 
@@ -269,11 +275,12 @@ class TempusArchive {
 
       util.removeEmpty(status)
 
+      util.log('')
       if (status.dupes) console.log('Delete Duplicate Videos:', status.dupes)
       if (status.privacy) console.log('Change Video Privacy:', status.privacy)
       if (status.update) console.log('Change Description Chain Id:', status.update)
 
-      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos!\n`)
+      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${skip})\n`)
 
       if (Object.keys(status).length) util.write(this.cfg.report, JSON.stringify(status, null, 2))
 
