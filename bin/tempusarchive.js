@@ -123,7 +123,7 @@ async function run (ids, opts) {
 
     console.log(MEDAL_OPEN, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
-    if (opts.upload && ta.uploads[rec.key]?.[id]) {
+    if (!opts.unlisted && opts.upload && ta.uploads[rec.key]?.[id]) {
       console.log(MEDAL_CLOSE, `Already Uploaded: ${ta.uploads[rec.key][id]}`)
       continue
     }
