@@ -105,13 +105,15 @@ class TempusArchive {
     return file
   }
 
-  async upload (rec, file, progress) {
+  async upload (rec, file, progress, single = false) {
     util.mkdir(this.tmp)
 
     await this.yt.updateSession()
 
     let override = this.uploads[rec.key]
     if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
+
+    if (single) override = null
 
     let desc = `https://tempus.xyz/records/${rec.id}/${rec.zone}`
     if (override) desc += `\nPrevious Record: https://youtu.be/${override}`
@@ -124,7 +126,7 @@ class TempusArchive {
     let vid = await this.yt.uploadVideo(file, {
       title: rec.display,
       description: desc,
-      visibility: this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC',
+      visibility: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
       category: this.cfg.meta.category,
       tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
     }, progress)
@@ -140,8 +142,10 @@ class TempusArchive {
 
     if (override) await this.yt.updateVideo(override, { privacyState: { newPrivacy: 'UNLISTED' } })
 
-    this.uploads.add(rec.key, rec.id, vid)
-    this.uploads.export(this.cfg.uploads)
+    if (!single) {
+      this.uploads.add(rec.key, rec.id, vid)
+      this.uploads.export(this.cfg.uploads)
+    }
 
     if (util.exists(this.cfg.velo)) {
       await this.yt.addCaptions(vid, [

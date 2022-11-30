@@ -20,6 +20,7 @@ program
   .option('-s, --shuffle', 'randomize the order of the records', false)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
   .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
 
@@ -109,6 +110,7 @@ async function run (ids, opts) {
 
   console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
   if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
+  else if (opts.unlisted) console.log(MEDAL, 'Uploading UNLISTED.')
 
   await ta.launch()
 
@@ -146,7 +148,7 @@ async function run (ids, opts) {
         util.log(`${MEDAL_CLOSE} Uploading...`)
         let vid = await ta.upload(rec, file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
-        })
+        }, opts.unlisted)
         util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
         util.remove(file)
       } catch (e) {
