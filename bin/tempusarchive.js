@@ -109,8 +109,11 @@ async function run (ids, opts) {
   let start = opts.index ?? 0
 
   console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
-  if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
-  else if (opts.unlisted) console.log(MEDAL, 'Uploading UNLISTED.')
+
+  let status = 'PUBLIC'
+  if (!opts.upload) status = 'DISABLED'
+  else if (opts.unlisted) status = 'UNLISTED'
+  console.log(MEDAL, `Upload Mode: ${status}`)
 
   await ta.launch()
 
