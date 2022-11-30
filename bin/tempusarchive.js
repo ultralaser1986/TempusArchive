@@ -19,7 +19,7 @@ program
   .option('-n, --max <number>', 'limit number of records to render', 0)
   .option('-s, --shuffle', 'randomize the order of the records', false)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
-  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  // .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
   .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
@@ -95,10 +95,7 @@ async function run (ids, opts) {
 
   if (!opts.continue) {
     if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
-      if (opts.update) {
-        console.log(MEDAL, 'Updating records file...')
-        await ta.update({ records: true })
-      } else console.log(MEDAL, 'Records file is older than a day!')
+      console.log(MEDAL, 'Records file is older than a day!')
     }
 
     if (!ids.length) ids = ta.pending().sort()
