@@ -1,7 +1,5 @@
-/*
-  Fixes broken cubemaps if map changed name. Cubemaps have to be rebuild after probably.
-  Unused because reflections look terrible in most cases.
-*/
+// fixes broken cubemaps if map changed name. Cubemaps have to be rebuild after probably.
+// unused because reflections look terrible in most cases.
 
 let fs = require('fs')
 let ph = require('path')
