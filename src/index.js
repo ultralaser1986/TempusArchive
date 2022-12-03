@@ -48,7 +48,7 @@ class TempusArchive {
 
     if (rec.rank === 1 && rec.z.type === 'map') {
       let wrs = await tempus.getMapWRS(rec.map)
-      rec.splits = Object.values(wrs).find(x => x.wr.id === id)?.wr?.splits
+      rec.splits = Object.values(wrs).find(x => x.wr.id === rec.id)?.wr?.splits
     }
 
     let nick = this.players[rec.player]
