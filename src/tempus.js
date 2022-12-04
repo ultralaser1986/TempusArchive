@@ -31,7 +31,7 @@ module.exports = {
     return title
   },
   formatTier (tier) {
-    switch (tier) {
+    switch (Number(tier)) {
       case 1: return 'Very Easy'
       case 2: return 'Easy'
       case 3: return 'Medium'
