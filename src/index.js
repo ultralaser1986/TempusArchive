@@ -121,12 +121,12 @@ class TempusArchive {
     let desc = [
       `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
       override ? `Previous Record: https://youtu.be/${override}` : '',
-      '\n\n',
-      tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : '',
+      '\n',
+      tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
       `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
       `Date: ${new Date(rec.date * 1000).toUTCString()}`
-    ].filter(x => x).join('\n')
+    ].filter(x => x !== null).join('\n')
 
     let chapters = await this.#chapters(rec)
     if (chapters) desc += chapters
