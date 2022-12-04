@@ -374,7 +374,7 @@ class TempusArchive {
   async #chapters (rec) {
     let zones = this.levelzones[rec.map]
 
-    if (zones) {
+    if (zones && !['bonus', 'trick'].includes(rec.z.type)) {
       let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
       let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
 
