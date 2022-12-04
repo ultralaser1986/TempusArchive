@@ -30,6 +30,17 @@ module.exports = {
 
     return title
   },
+  formatTier (tier) {
+    switch (tier) {
+      case 1: return 'Very Easy'
+      case 2: return 'Easy'
+      case 3: return 'Medium'
+      case 4: return 'Hard'
+      case 5: return 'Very Hard'
+      case 6: return 'Insane'
+    }
+    return 'Unknown'
+  },
   async getMapWRS (map) {
     return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)
   }

@@ -115,10 +115,18 @@ class TempusArchive {
 
     if (single) override = null
 
-    let desc = `https://tempus.xyz/records/${rec.id}/${rec.zone}`
-    if (override) desc += `\nPrevious Record: https://youtu.be/${override}`
-    desc += `\n\n\nPlayer: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`
-    desc += `\nDate: ${new Date(rec.date * 1000).toUTCString()}`
+    let tier = null
+    if (rec.z.type !== 'trick') tier = rec.tier[rec.class]
+
+    let desc = [
+      `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
+      override ? `Previous Record: https://youtu.be/${override}` : '',
+      '\n\n',
+      tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : '',
+      `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
+      `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
+      `Date: ${new Date(rec.date * 1000).toUTCString()}`
+    ].filter(x => x).join('\n')
 
     let chapters = await this.#chapters(rec)
     if (chapters) desc += chapters
