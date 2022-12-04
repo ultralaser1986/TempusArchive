@@ -116,7 +116,7 @@ class TempusArchive {
     if (single) override = null
 
     let tier = null
-    if (rec.z.type !== 'trick') tier = rec.tier[rec.class]
+    if (rec.z.type !== 'trick') tier = rec.tier
 
     let desc = [
       `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
