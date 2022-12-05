@@ -121,7 +121,7 @@ class TempusArchive {
     let desc = [
       `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
       override ? `Previous Record: https://youtu.be/${override}` : '',
-      '\n',
+      '',
       tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
       `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
