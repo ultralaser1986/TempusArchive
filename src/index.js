@@ -158,11 +158,11 @@ class TempusArchive {
 
     if (util.exists(this.cfg.velo)) {
       await this.yt.addCaptions(vid, [
-        this.#captions(this.cfg.velo, rec, 0, ''), // Timer
+        this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
         this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
         this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
         this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
-        this.#captions(this.cfg.velo, rec, 4, 'Demo Tick')
+        this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
       ])
     }
 
