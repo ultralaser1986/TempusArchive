@@ -85,7 +85,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
 
   let res = await this.createVideo(video)
 
-  let reason = res.contents?.uploadFeedbackItemRenderer?.contents[0]?.uploadStatus?.uploadStatusReason
+  let reason = res.contents?.uploadFeedbackItemRenderer?.contents?.[0]?.uploadStatus?.uploadStatusReason
   if (reason) throw Error(reason)
 
   await this.sendVideoBinary(video, progress)
