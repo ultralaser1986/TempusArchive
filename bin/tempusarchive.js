@@ -143,6 +143,9 @@ async function run (ids, opts) {
       continue
     }
 
+    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
+    if (res.stdout.trim() === '1024x1024') throw Error('Video output is corrupted.')
+
     if (opts.upload) {
       try {
         util.log(`${MEDAL_CLOSE} Uploading...`)
