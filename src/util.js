@@ -48,8 +48,13 @@ module.exports = {
   write (file, data) {
     fs.writeFileSync(file, data)
   },
-  exec (cmd) {
-    return child.execSync(cmd, { stdio: 'pipe' })
+  async exec (cmd) {
+    return new Promise(resolve => {
+      child.exec(cmd, { stdio: 'pipe' }, (err, stdout, stderr) => {
+        if (err) throw err
+        resolve({ stdout, stderr })
+      })
+    })
   },
   join (...paths) {
     return ph.join(...paths)

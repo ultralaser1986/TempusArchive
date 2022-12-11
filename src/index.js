@@ -142,7 +142,7 @@ class TempusArchive {
 
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
-    let thumbnail = this.#thumb(file, time)
+    let thumbnail = await this.#thumb(file, time)
 
     await this.yt.updateVideo(vid, {
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
@@ -458,9 +458,9 @@ class TempusArchive {
     }
   }
 
-  #thumb (file, seconds) {
+  async #thumb (file, seconds) {
     let path = util.join(this.tmp, this.cfg.thumb)
-    util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
+    await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
     return 'data:image/png;base64,' + util.read(path, 'base64')
   }
 
