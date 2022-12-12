@@ -19,5 +19,9 @@
     {
         "zones": [ 7789, 7791, 7793, 7795 ], 
         "override": { "cmd": "r_renderoverlayfragment 0" }
+    },
+    {
+        "zones": [ 1249, 1250 ],
+        "override": { "cmd": "mat_bumpmap 0" }
     }
 ]
