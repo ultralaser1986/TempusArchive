@@ -290,29 +290,10 @@ YouTube.prototype.deleteVideo = async function (id) {
   }
 }
 
-YouTube.prototype.addCaptions = async function (id, captions) {
+YouTube.prototype.addCaptions = async function (id, captions, together = false) {
   if (!Array.isArray(captions)) captions = [captions]
-  try {
-    let ops = []
 
-    let debugTotal = 0
-
-    for (let cap of captions) {
-      ops.push({
-        captionsFile: {
-          dataUri: 'data:application/octet-stream;base64,' + cap.buffer.toString('base64')
-        },
-        ttsTrackId: { lang: cap.lang, name: cap.name },
-        isContentEdited: false,
-        userIntent: 'USER_INTENT_EDIT_LATEST_DRAFT',
-        vote: 'VOTE_PUBLISH'
-      })
-
-      debugTotal += ops.at(-1).captionsFile.dataUri.length
-    }
-
-    console.log('\n[DEBUG] Total Size Of Captions:', util.formatBytes(debugTotal))
-
+  let post = async (operations) => {
     let res = await dp.post('https://studio.youtube.com/youtubei/v1/globalization/update_captions', {
       query: {
         alt: 'json',
@@ -327,10 +308,38 @@ YouTube.prototype.addCaptions = async function (id, captions) {
         context: this.context(),
         videoId: id,
         channelId: this.keys.channel,
-        operations: ops
+        operations
       }
     })
     return res.headers.statusCode
+  }
+
+  try {
+    let ops = []
+
+    let debugTotal = 0
+
+    for (let cap of captions) {
+      let c = {
+        ttsTrackId: { lang: cap.lang, name: cap.name },
+        isContentEdited: false,
+        userIntent: 'USER_INTENT_EDIT_LATEST_DRAFT',
+        vote: 'VOTE_PUBLISH'
+      }
+
+      if (!cap.buffer) c.captionSegments = { segments: cap.segments }
+      else c.captionsFile = { dataUri: 'data:application/octet-stream;base64,' + cap.buffer.toString('base64') }
+
+      if (!together) await post([c])
+      else ops.push(c)
+
+      if (c.captionsFile) debugTotal += c.captionsFile.dataUri.length
+      else debugTotal += JSON.stringify(c.captionSegments).length
+    }
+
+    if (together) await post(ops)
+
+    console.log('\n[DEBUG] Total Size Of Captions:', util.formatBytes(debugTotal))
   } catch (e) {
     throw Error(e)
   }

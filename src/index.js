@@ -436,6 +436,8 @@ class TempusArchive {
       }
     }
 
+    let styled = lines.length <= 50000
+
     for (let i = 0; i < lines.length; i++) {
       let [tick, x, y, z] = lines[i].split(' ').map(Number)
 
@@ -444,18 +446,17 @@ class TempusArchive {
       let start = ms(tick)
       let next = lines[i + 1] ? ms(Number(lines[i + 1].split(' ')[0])) : null
 
-      parts.push(template
-        .replace('%START%', Math.floor(start))
-        .replace('%TIME%', next ? Math.ceil(next - start) : 100)
-        .replace('%TEXT%', act[method](tick, x, y, z))
-      )
+      let [a, b, c] = [Math.floor(start), next ? Math.ceil(next - start) : 100, act[method](tick, x, y, z)]
+
+      if (!styled) parts.push({ startTimeMs: a, durationMs: b, text: c.toString() })
+      else parts.push(template.replace('%START%', a).replace('%TIME%', b).replace('%TEXT%', c))
     }
 
-    return {
-      name,
-      lang: 'en',
-      buffer: Buffer.from(caps.replace(template, parts.join('\n')))
-    }
+    let res = { name, lang: 'en' }
+    if (styled) res.buffer = Buffer.from(caps.replace(template, parts.join('\n')))
+    else res.segments = parts
+
+    return res
   }
 
   async #thumb (file, seconds) {
