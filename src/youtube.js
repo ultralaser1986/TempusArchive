@@ -317,8 +317,6 @@ YouTube.prototype.addCaptions = async function (id, captions, together = false) 
   try {
     let ops = []
 
-    let debugTotal = 0
-
     for (let cap of captions) {
       let c = {
         ttsTrackId: { lang: cap.lang, name: cap.name },
@@ -332,14 +330,9 @@ YouTube.prototype.addCaptions = async function (id, captions, together = false) 
 
       if (!together) await post([c])
       else ops.push(c)
-
-      if (c.captionsFile) debugTotal += c.captionsFile.dataUri.length
-      else debugTotal += JSON.stringify(c.captionSegments).length
     }
 
     if (together) await post(ops)
-
-    console.log('\n[DEBUG] Total Size Of Captions:', util.formatBytes(debugTotal))
   } catch (e) {
     throw Error(e)
   }
