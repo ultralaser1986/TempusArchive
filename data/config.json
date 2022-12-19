@@ -18,6 +18,8 @@
     "curves": "data/curves.acv",
     "new_map_wait": 604800000, 
     "record_update_wait":  72000000,
+    "caption_limit_max": 6600,
+    "caption_limit_style": 50000,
     "zones": ["map", "bonus", "trick", "course"],
     "unlisted": ["map"],
     "padding": 200,

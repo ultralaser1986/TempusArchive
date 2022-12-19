@@ -157,13 +157,17 @@ class TempusArchive {
     }
 
     if (util.exists(this.cfg.velo)) {
-      await this.yt.addCaptions(vid, [
-        this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
-        this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
-        this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
-        this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
-        this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
-      ])
+      // captions over 1h50min~ break, so we dont upload them
+      // captions over 13min~ wont have styling
+      if (rec.time <= this.cfg.caption_limit_max) {
+        await this.yt.addCaptions(vid, [
+          this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
+          this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
+          this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
+          this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
+          this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
+        ])
+      }
     }
 
     util.remove([this.tmp, this.cfg.velo])
@@ -436,7 +440,7 @@ class TempusArchive {
       }
     }
 
-    let styled = lines.length <= 50000
+    let styled = lines.length <= this.cfg.caption_limit_style
 
     for (let i = 0; i < lines.length; i++) {
       let [tick, x, y, z] = lines[i].split(' ').map(Number)
