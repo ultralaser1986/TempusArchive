@@ -157,8 +157,9 @@ class TempusArchive {
     }
 
     if (util.exists(this.cfg.velo)) {
-      // captions over 1h50min~ break, so we dont upload them
       // captions over 13min~ wont have styling
+      // captions over 1h50min~ break, so we half their fps
+      // captions over 3h40min~ turned completely off
       if (rec.time <= this.cfg.caption_limit_max) {
         await this.yt.addCaptions(vid, [
           this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
@@ -441,6 +442,7 @@ class TempusArchive {
     }
 
     let styled = lines.length <= this.cfg.caption_limit_style
+    let reduced = rec.time > this.cfg.caption_limit_reduced
 
     for (let i = 0; i < lines.length; i++) {
       let [tick, x, y, z] = lines[i].split(' ').map(Number)
@@ -448,12 +450,15 @@ class TempusArchive {
       if (tick < range[0] || tick > range[1]) continue
 
       let start = ms(tick)
-      let next = lines[i + 1] ? ms(Number(lines[i + 1].split(' ')[0])) : null
+      let n = lines[i + (reduced ? 2 : 1)]
+      let next = n ? ms(Number(n.split(' ')[0])) : null
 
       let [a, b, c] = [Math.floor(start), next ? Math.ceil(next - start) : 100, act[method](tick, x, y, z)]
 
       if (!styled) parts.push({ startTimeMs: a, durationMs: b, text: c.toString() })
       else parts.push(template.replace('%START%', a).replace('%TIME%', b).replace('%TEXT%', c))
+
+      if (reduced) i++
     }
 
     let res = { name, lang: 'en' }
