@@ -19,7 +19,8 @@ program
   .option('-n, --max <number>', 'limit number of records to render', 0)
   .option('-s, --shuffle', 'randomize the order of the records', false)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
-  .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  // .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
 
@@ -43,7 +44,7 @@ program
   .description('delete leftover temporary files')
   .action(() => {
     ta.tr.init()
-    util.remove(ta.cfg.state)
+    util.remove([ta.cfg.state, ta.cfg.report, ta.cfg.velo])
   })
 
 program
@@ -58,6 +59,14 @@ program
     await ta.launch()
 
     console.log(MEDAL, `Building cubemaps for ${map}...`)
+  })
+
+program
+  .command('check')
+  .description('check if keys.json is valid')
+  .action(async () => {
+    ta.tr.init()
+    console.log(await ta.yt.updateSession())
   })
 
 program
@@ -86,10 +95,7 @@ async function run (ids, opts) {
 
   if (!opts.continue) {
     if (!ids.length && Date.now() - util.date(ta.cfg.records) >= ta.cfg.record_update_wait) {
-      if (opts.update) {
-        console.log(MEDAL, 'Updating records file...')
-        await ta.update({ records: true })
-      } else console.log(MEDAL, 'Records file is older than a day!')
+      console.log(MEDAL, 'Records file is older than a day!')
     }
 
     if (!ids.length) ids = ta.pending().sort()
@@ -100,7 +106,11 @@ async function run (ids, opts) {
   let start = opts.index ?? 0
 
   console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
-  if (!opts.upload) console.log(MEDAL, 'Uploading disabled.')
+
+  let status = 'PUBLIC'
+  if (!opts.upload) status = 'DISABLED'
+  else if (opts.unlisted) status = 'UNLISTED'
+  console.log(MEDAL, `Upload Mode: ${status}`)
 
   await ta.launch()
 
@@ -113,7 +123,7 @@ async function run (ids, opts) {
 
     console.log(MEDAL_OPEN, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
-    if (opts.upload && ta.uploads[rec.key]?.[id]) {
+    if (!opts.unlisted && opts.upload && ta.uploads[rec.key]?.[id]) {
       console.log(MEDAL_CLOSE, `Already Uploaded: ${ta.uploads[rec.key][id]}`)
       continue
     }
@@ -121,7 +131,7 @@ async function run (ids, opts) {
     let file = null
 
     try {
-      file = await ta.record(rec, 'default')
+      file = await ta.record(rec, 'default', 'default')
     } catch (e) {
       console.log('\n', MEDAL_CLOSE, 'Error during record! Aborting process...')
       console.error(e)
@@ -133,13 +143,16 @@ async function run (ids, opts) {
       continue
     }
 
+    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
+    if (res.stdout.trim() === '1024x1024') throw Error('Video output is corrupted.')
+
     if (opts.upload) {
       try {
         util.log(`${MEDAL_CLOSE} Uploading...`)
         let vid = await ta.upload(rec, file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
-        })
-        util.log(MEDAL_CLOSE, `https://youtu.be/${vid} <${util.size(file)}>\n`)
+        }, opts.unlisted)
+        util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
         util.remove(file)
       } catch (e) {
         console.log('\n', MEDAL_CLOSE, 'Error during upload! Aborting process...')

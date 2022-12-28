@@ -7,18 +7,18 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bakapear/TempusArchive.git"
+    "url": "git+https://github.com/ultralaser1986/TempusArchive.git"
   },
   "author": "pear",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bakapear/TempusArchive/issues"
+    "url": "https://github.com/ultralaser1986/TempusArchive/issues"
   },
-  "homepage": "https://github.com/bakapear/TempusArchive#readme",
+  "homepage": "https://github.com/ultralaser1986/TempusArchive#readme",
   "dependencies": {
     "commander": "^9.4.0",
     "despair": "^2.1.2",
-    "temrec": "^3.4.2"
+    "temrec": "^3.7.4"
   },
   "os": [
     "win32"

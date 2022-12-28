@@ -1,51 +1,27 @@
 [
     {
-        "records": [
-            4398552
-        ],
-        "override": {
-            "skip": true
-        }
+        "records": [ 1533185, 1716752, 1788442, 1833933, 1949866, 1964695, 1967249, 1970552, 1972401, 1993203, 1993288, 1999905, 2004921 ], 
+        "override": { "local": "data/demos" }
     },
     {
-        "zones": [
-            10988
-        ],
-        "maps": [
-            "jump_fear_redo",
-            "jump_flashblack",
-            "jump_gman_beta_4",
-            "jump_housebeta",
-            "jump_karb_b3",
-            "jump_noob2_ab",
-            "jump_purecio_b2",
-            "jump_wallclimb_v1alpha",
-            "jump_unclesam"
-        ],
-        "override": {
-            "cmd": "mat_fullbright 1",
-            "ffmpeg": {
-                "curves": "data/curves_fullbright.acv"
-            }
-        }
+        "records": [ 2095342 ], 
+        "override": { "cmd": "spec_player \"STEAM_0:0:115234\"" } 
     },
     {
-        "zones": [
-            7789,
-            7791,
-            7793,
-            7795
-        ],
-        "override": {
-            "cmd": "r_renderoverlayfragment 0"
-        }
+        "records": [ 4398552 ], 
+        "override": { "skip": true }
     },
     {
-        "maps": [
-            "jump_ring2"
-        ],
-        "override": {
-            "cmd": "mat_specular 0"
-        }
+        "zones": [ 10988 ],
+        "maps": [ "jump_fear_redo", "jump_flashblack", "jump_gman_beta_4", "jump_housebeta", "jump_karb_b3", "jump_noob2_ab", "jump_purecio_b2", "jump_wallclimb_v1alpha", "jump_unclesam" ],
+        "override": { "cmd": "mat_fullbright 1", "ffmpeg": { "curves": "data/curves_fullbright.acv" } }
+    },
+    {
+        "zones": [ 7789, 7791, 7793, 7795 ], 
+        "override": { "cmd": "r_renderoverlayfragment 0" }
+    },
+    {
+        "zones": [ 1249, 1250 ],
+        "override": { "cmd": "mat_bumpmap 0" }
     }
 ]

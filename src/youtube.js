@@ -4,6 +4,8 @@ let ph = require('path')
 let crypto = require('crypto')
 let risk = require('./risk')
 
+let util = require('./util')
+
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 let CHUNK_SIZE = 262144 * 20
@@ -55,14 +57,11 @@ function YouTube (keyfile) {
     channel: keys.channelId
   }
 
-  this.context = {
-    client: { clientName: 62, clientVersion: '1.11111111' },
-    request: { sessionInfo: { token: this.keys.session } }
-  }
-
-  if (this.keys.channel) {
-    this.context.user = {
-      serializedDelegationContext: getSerializedDelegationContext(this.keys.channel)
+  this.context = () => {
+    return {
+      client: { clientName: 62, clientVersion: '1.11111111' },
+      request: { sessionInfo: { token: this.keys.session } },
+      user: { serializedDelegationContext: getSerializedDelegationContext(this.keys.channel) }
     }
   }
 }
@@ -73,7 +72,9 @@ YouTube.prototype.updateSession = async function () {
     let keys = JSON.parse(fs.readFileSync(this.file))
     this.keys.session = keys.sessionInfo = await risk(keys)
     fs.writeFileSync(this.file, JSON.stringify(keys, null, 2))
+    return false
   }
+  return true
 }
 
 YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
@@ -84,7 +85,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
 
   let res = await this.createVideo(video)
 
-  let reason = res.contents?.uploadFeedbackItemRenderer?.contents[0]?.uploadStatus?.uploadStatusReason
+  let reason = res.contents?.uploadFeedbackItemRenderer?.contents?.[0]?.uploadStatus?.uploadStatusReason
   if (reason) throw Error(reason)
 
   await this.sendVideoBinary(video, progress)
@@ -106,7 +107,7 @@ YouTube.prototype.updateVideo = async function (vid, data) {
       },
       data: {
         encryptedVideoId: vid,
-        context: this.context,
+        context: this.context(),
         ...data
       }
     })
@@ -161,7 +162,7 @@ YouTube.prototype.createVideo = async function (video) {
         }
       },
       frontendUploadId: video.id,
-      context: this.context
+      context: this.context()
     }
   }).json()
   return body
@@ -223,7 +224,7 @@ YouTube.prototype.listVideos = async function (next) {
         timeCreatedSeconds: true
       },
       pageToken: next,
-      context: this.context
+      context: this.context()
     },
     type: 'json'
   }).json()
@@ -256,7 +257,7 @@ YouTube.prototype.deleteVideos = async function (ids) {
       },
       data: {
         videos: { videoIds: ids },
-        context: this.context
+        context: this.context()
       }
     })
   } catch (e) {
@@ -280,10 +281,58 @@ YouTube.prototype.deleteVideo = async function (id) {
       },
       data: {
         videoId: id,
-        context: this.context
+        context: this.context()
       }
     }).json()
     return res.success
+  } catch (e) {
+    throw Error(e)
+  }
+}
+
+YouTube.prototype.addCaptions = async function (id, captions, together = false) {
+  if (!Array.isArray(captions)) captions = [captions]
+
+  let post = async (operations) => {
+    let res = await dp.post('https://studio.youtube.com/youtubei/v1/globalization/update_captions', {
+      query: {
+        alt: 'json',
+        key: INNERTUBE_KEY
+      },
+      headers: {
+        'x-origin': 'https://studio.youtube.com',
+        cookie: this.keys.cookies,
+        Authorization: this.keys.authorization
+      },
+      data: {
+        context: this.context(),
+        videoId: id,
+        channelId: this.keys.channel,
+        operations
+      }
+    })
+    return res.headers.statusCode
+  }
+
+  try {
+    let ops = []
+
+    for (let cap of captions) {
+      let c = {
+        ttsTrackId: { lang: cap.lang, name: cap.name },
+        isContentEdited: false,
+        userIntent: 'USER_INTENT_EDIT_LATEST_DRAFT',
+        vote: 'VOTE_PUBLISH'
+      }
+
+      if (!cap.buffer) c.captionSegments = { segments: cap.segments }
+      else c.captionsFile = { dataUri: 'data:application/octet-stream;base64,' + cap.buffer.toString('base64') }
+
+      if (!together) await post([c])
+      else ops.push(c)
+    }
+
+    if (together) await post(ops)
   } catch (e) {
     throw Error(e)
   }

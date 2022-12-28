@@ -4,19 +4,19 @@ let util = require('./util')
 let base = 'https://tempus.xyz/api'
 
 module.exports = {
-  async getMap (id) {
-    return await dp(base + `/maps/id/${id}/fullOverview`).json().catch(() => null)
+  async getMapList () {
+    return await dp(base + '/maps/detailedList').json().catch(() => null)
   },
   async getMapRecords (id, zone, index, limit = 1) {
     return await dp(base + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
   },
-  async getImprovementFromRecord (rec) {
+  async getDiffFromRecord (rec) {
     let c = rec.class === 'S' ? 'soldier' : 'demoman'
     let m = await this.getMapRecords(rec.z.map, rec.z.type, rec.z.index, 100)
-    let w = m.results[c].slice(1).find(x => x.duration > rec.time)
-    return w ? (w.duration - rec.time) : 0
+    let w = rec.rank !== 1 ? m.results[c][0] : m.results[c].slice(1).find(x => x.duration > rec.time)
+    return w ? (rec.time - w.duration) : 0
   },
-  async formatDisplay (rec, nick) {
+  formatDisplay (rec, nick) {
     let type = rec.z.type
     if (type === 'map') type = ''
     else type = `${type[0].toUpperCase()}${type.slice(1)} ${rec.z.index}`
@@ -29,5 +29,19 @@ module.exports = {
     title += ` - ${time}`
 
     return title
+  },
+  formatTier (tier) {
+    switch (Number(tier)) {
+      case 1: return 'Very Easy'
+      case 2: return 'Easy'
+      case 3: return 'Medium'
+      case 4: return 'Hard'
+      case 5: return 'Very Hard'
+      case 6: return 'Insane'
+    }
+    return 'Unknown'
+  },
+  async getMapWRS (map) {
+    return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)
   }
 }

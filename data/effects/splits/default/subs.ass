@@ -1,0 +1,19 @@
+﻿[Script Info]
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1920
+PlayResY: 1080
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Primary,TYPOGRAPH PRO Extra Bold,80,&H00FFFFFF,&H000000FF,&H96000000,&H7B000000,0,0,0,0,100,100,0,0,1,0,4.56667,1,7,7,37,1
+Style: Secondary,TYPOGRAPH PRO Semi Bold,50,&H0000AEFF,&H000000FF,&H00000000,&H96000000,0,0,0,0,100,100,0,0,1,0,4,1,7,7,0,1
+Style: Text,TYPOGRAPH PRO Extra Bold,50,&H00FFFFFF,&H000000FF,&H96000000,&H7B000000,0,0,0,0,100,100,0,0,1,0,5.06667,1,7,7,100,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,%TIME%,%TIME[+3]%,Text,,0,0,0,,{\fad(100,200)\fscx70\fscy70}%NAME%
+Dialogue: 0,%TIME%,%TIME[+3]%,Primary,,0,0,0,,{\fad(100,200)\fscx100\fscy100}%PRI%{\fsp-28}{\fsp\fscx70\fscy70\t}.%MARY%
+Dialogue: 0,%TIME%,%TIME[+3]%,Secondary,,0,0,0,,{\fad(100,200)\fscx100\fscy100)}%SECON%{\fsp\fscx70\fscy70)}.%DARY%
+
