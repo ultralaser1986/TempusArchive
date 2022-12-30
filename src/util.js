@@ -79,8 +79,9 @@ module.exports = {
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
   },
-  size (file) {
-    return this.formatBytes(fs.statSync(file).size)
+  size (file, raw = false) {
+    let s = fs.statSync(file).size
+    return raw ? s : this.formatBytes(s)
   },
   exists (file) {
     return fs.existsSync(file)

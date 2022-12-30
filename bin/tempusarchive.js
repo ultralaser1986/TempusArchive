@@ -17,6 +17,8 @@ program
   .description('start rendering')
   .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
   .option('-n, --max <number>', 'limit number of records to render', 0)
+  .option('-nt, --ntime <seconds>', 'limit amount of records rendered by seconds', 0)
+  .option('-ns, --nsize <bytes>', 'limit amount of records rendered by bytes', 0)
   .option('-s, --shuffle', 'randomize the order of the records', false)
   .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
   // .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
@@ -104,6 +106,8 @@ async function run (ids, opts) {
   }
 
   let start = opts.index ?? 0
+  let time = opts.time ?? 0
+  let size = opts.size ?? 0
 
   console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
 
@@ -115,7 +119,17 @@ async function run (ids, opts) {
   await ta.launch()
 
   for (let i = start; i < ids.length; i++) {
-    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i } }))
+    if (time && Number(opts.ntime) && time > opts.ntime) {
+      console.log(MEDAL, `ntime limit reached (${time.toFixed(1)}s > ${opts.ntime.toFixed(1)}s)! Quitting...`)
+      break
+    }
+
+    if (size && Number(opts.nsize) && size > opts.nsize) {
+      console.log(MEDAL, `nsize limit reached (${size}B > ${opts.nsize}B)! Quitting...`)
+      break
+    }
+
+    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i, time, size } }))
 
     let id = ids[i]
 
@@ -142,6 +156,9 @@ async function run (ids, opts) {
       console.log(MEDAL_CLOSE, 'Skipping record.')
       continue
     }
+
+    time += rec.time
+    size += util.size(file, true)
 
     let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
     if (res.stdout.trim() === '1024x1024') throw Error('Video output is corrupted.')
