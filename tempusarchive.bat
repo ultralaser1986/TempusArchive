@@ -5,8 +5,7 @@ node bin/tempusarchive run %*
 
 :restart
 IF EXIST "STATE" ( 
-	echo. && echo Program terminated unexpectedly. Restarting in 20s...
-	timeout 20 > NUL
+	echo. && echo Program terminated unexpectedly. Restarting...
 	node bin/tempusarchive run -c
 	goto restart
 )
