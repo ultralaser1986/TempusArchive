@@ -161,7 +161,11 @@ async function run (ids, opts) {
     size += util.size(file, true)
 
     let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
-    if (res.stdout.trim() === '1024x1024') throw Error('Video output is corrupted.')
+    if (res.stdout.trim() === '1024x1024') {
+      console.log(MEDAL_CLOSE, 'Error! Video output is corrupted.')
+      await ta.exit(true)
+      return
+    }
 
     if (opts.upload) {
       try {
