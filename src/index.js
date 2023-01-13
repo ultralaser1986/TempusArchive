@@ -145,12 +145,20 @@ class TempusArchive {
     if (rec.splits) time = rec.splits[0].duration - 0.1
     let thumbnail = await this.#thumb(file, time)
 
+    let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
+
     await this.yt.updateVideo(vid, {
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
-      gameTitle: { newKgEntityId: this.cfg.meta.game }
+      gameTitle: { newKgEntityId: this.cfg.meta.game },
+      addToPlaylist: { addToPlaylistIds: [pl] }
     })
 
-    if (override) await this.yt.updateVideo(override, { privacyState: { newPrivacy: 'UNLISTED' } })
+    if (override) {
+      await this.yt.updateVideo(override, {
+        privacyState: { newPrivacy: 'UNLISTED' },
+        addToPlaylist: { deleteFromPlaylistIds: [pl] }
+      })
+    }
 
     if (!single) {
       this.uploads.add(rec.key, rec.id, vid)

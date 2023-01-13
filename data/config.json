@@ -21,7 +21,7 @@
     "caption_limit_reduced": 6600,
     "caption_limit_max": 13200,
     "caption_limit_style": 50000,
-    "zones": ["map", "bonus", "trick", "course"],
+    "zones": ["map", "course", "bonus", "trick"],
     "unlisted": ["map"],
     "padding": 200,
     "pre": 300,
@@ -32,5 +32,11 @@
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
     "state": "STATE",
-    "report": "data/report.json"
+    "report": "data/report.json",
+    "playlist": {
+        "map": "PLA_TcYVYdyj_izt-_fLe8lBfE-ZPrSAT-",
+        "course": "PLA_TcYVYdyj8Z3QN2RGwbsTtdf2YSzz2J",
+        "bonus": "PLA_TcYVYdyj8nDbGKQDNy8cTDIBG0Z5rR",
+        "trick": "PLA_TcYVYdyj8A-IInfR_uu4m82hUO_QIg"
+    }
 }
