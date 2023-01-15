@@ -142,11 +142,14 @@ class TempusArchive {
     }, progress)
 
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
+    if (this.cfg.DEBUG) console.log(`[DEBUG] Making thumbnail at ${time}s...`)
     if (rec.splits) time = rec.splits[0].duration - 0.1
     let thumbnail = await this.#thumb(file, time)
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
+    if (this.cfg.DEBUG) console.log(`[DEBUG] Playlist set to: ${pl} [${rec.z.type}]`)
 
+    if (this.cfg.DEBUG) console.log(`[DEBUG] Updating metadata of video... (${vid})`)
     await this.yt.updateVideo(vid, {
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
       gameTitle: { newKgEntityId: this.cfg.meta.game },
@@ -154,15 +157,11 @@ class TempusArchive {
     })
 
     if (override) {
+      if (this.cfg.DEBUG) console.log(`[DEBUG] Updating metadata of old video... (${override})`)
       await this.yt.updateVideo(override, {
         privacyState: { newPrivacy: 'UNLISTED' },
         addToPlaylist: { deleteFromPlaylistIds: [pl] }
       })
-    }
-
-    if (!single) {
-      this.uploads.add(rec.key, rec.id, vid)
-      this.uploads.export(this.cfg.uploads)
     }
 
     if (util.exists(this.cfg.velo)) {
@@ -170,6 +169,7 @@ class TempusArchive {
       // captions over 1h50min~ break, so we half their fps
       // captions over 3h40min~ turned completely off
       if (rec.time <= this.cfg.caption_limit_max) {
+        if (this.cfg.DEBUG) console.log('[DEBUG] Adding captions...')
         await this.yt.addCaptions(vid, [
           this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
           this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
@@ -178,6 +178,12 @@ class TempusArchive {
           this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
         ])
       }
+    }
+
+    if (!single) {
+      if (this.cfg.DEBUG) console.log('[DEBUG] Adding upload to database...')
+      this.uploads.add(rec.key, rec.id, vid)
+      this.uploads.export(this.cfg.uploads)
     }
 
     util.remove([this.tmp, this.cfg.velo])

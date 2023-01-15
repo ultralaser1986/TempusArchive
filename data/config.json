@@ -38,5 +38,6 @@
         "course": "PLA_TcYVYdyj8Z3QN2RGwbsTtdf2YSzz2J",
         "bonus": "PLA_TcYVYdyj8nDbGKQDNy8cTDIBG0Z5rR",
         "trick": "PLA_TcYVYdyj8A-IInfR_uu4m82hUO_QIg"
-    }
+    },
+    "DEBUG": true
 }
