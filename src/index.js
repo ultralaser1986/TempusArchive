@@ -250,7 +250,7 @@ class TempusArchive {
 
     if (opts.uploads) {
       let uploads = new ListStore()
-      let status = { skips: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
+      let status = { skips: [], wipes: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
       let info = {}
 
       util.log('[Uploads] Fetching videos...')
@@ -258,7 +258,7 @@ class TempusArchive {
       let total = 0
 
       let loopVids = async next => {
-        let res = await this.yt.listVideos(next)
+        let res = await this.yt.listVideos(null, next)
 
         total += res.items.length
         util.log(`[Uploads] Fetching videos... ${total}`)
@@ -266,6 +266,11 @@ class TempusArchive {
         for (let item of res.items) {
           if (item.title[0] === '!') {
             status.skips.push(item.videoId)
+            continue
+          }
+
+          if (item.title[0] === '?') {
+            status.wipes.push(item.videoId)
             continue
           }
 
@@ -320,8 +325,9 @@ class TempusArchive {
       if (status.privacy) console.log('Change Video Privacy:', status.privacy)
       if (status.update) console.log('Change Description Chain Id:', status.update)
       if (status.skips) console.log('Skipped records:', status.skips)
+      if (status.wipes) console.log('Wiped records:', status.wipes)
 
-      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0})\n`)
+      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)
 
       if (Object.keys(status).length) util.write(this.cfg.report, JSON.stringify(status, null, 2))
 

@@ -204,8 +204,10 @@ YouTube.prototype.sendVideoBinary = async function (video, progress) {
   })
 }
 
-YouTube.prototype.listVideos = async function (next) {
-  let body = await dp.post('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos', {
+YouTube.prototype.listVideos = async function (vids, next) {
+  if (!vids || !Array.isArray(vids)) vids = []
+  let method = vids.length ? 'get' : 'list'
+  let body = await dp.post(`https://studio.youtube.com/youtubei/v1/creator/${method}_creator_videos`, {
     query: {
       alt: 'json',
       key: INNERTUBE_KEY
@@ -223,6 +225,7 @@ YouTube.prototype.listVideos = async function (next) {
         privacy: true,
         timeCreatedSeconds: true
       },
+      videoIds: vids,
       pageToken: next,
       context: this.context()
     },

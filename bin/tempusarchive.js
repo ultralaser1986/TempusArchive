@@ -97,6 +97,28 @@ program
   })
 
 program
+  .command('wipe')
+  .description('unlist a youtube video and mark it as wiped')
+  .argument('<video id>', 'youtube video id to wipe')
+  .action(async (vid) => {
+    ta.tr.init()
+    await ta.yt.updateSession()
+
+    let res = await ta.yt.listVideos([vid])
+    let title = res.items[0].title
+
+    title = title.replace(/^(! )?/, '? ')
+
+    await ta.yt.updateVideo(vid, {
+      privacyState: { newPrivacy: 'UNLISTED' },
+      addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
+      title: { newTitle: title }
+    })
+
+    console.log(`Wiped: ${title} (${vid})`)
+  })
+
+program
   .name('tempusarchive')
   .parse()
 
