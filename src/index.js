@@ -314,6 +314,8 @@ class TempusArchive {
             let pwr = ups[i - 1]
             let match = description.match('https://youtu.be/' + pwr)
             if (!match) status.update[vid] = pwr
+          } else if (ups.length === 1) {
+            if (description.match('https://youtu.be/')) status.update[vid] = ''
           }
         }
       }
