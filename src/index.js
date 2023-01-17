@@ -150,11 +150,23 @@ class TempusArchive {
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
-    await this.yt.updateVideo(vid, {
-      videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
-      gameTitle: { newKgEntityId: this.cfg.meta.game },
-      addToPlaylist: { addToPlaylistIds: [pl] }
-    })
+
+    let retries = 5
+    for (let i = 0; i <= retries; i++) {
+      try {
+        await this.yt.updateVideo(vid, {
+          videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
+          gameTitle: { newKgEntityId: this.cfg.meta.game },
+          addToPlaylist: { addToPlaylistIds: [pl] }
+        })
+      } catch (e) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        if (i === retries) throw e
+        if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed updating metadata, retrying (${i + 1}/${retries})...`)
+        continue
+      }
+      break
+    }
 
     if (override) {
       if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
