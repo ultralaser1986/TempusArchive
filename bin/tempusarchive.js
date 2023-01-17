@@ -107,13 +107,24 @@ program
     let res = await ta.yt.listVideos([vid])
     let title = res.items[0].title
 
-    title = title.replace(/^(! )?/, '? ')
+    title = title.replace(/^((!|\?) )?/, '? ')
 
     await ta.yt.updateVideo(vid, {
       privacyState: { newPrivacy: 'UNLISTED' },
       addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
       title: { newTitle: title }
     })
+
+    for (let zone in ta.uploads) {
+      for (let id in ta.uploads[zone]) {
+        if (vid === ta.uploads[zone][id]) {
+          delete ta.uploads[zone][id]
+          if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
+          ta.uploads.export()
+          break
+        }
+      }
+    }
 
     console.log(`Wiped: ${title} (${vid})`)
   })
