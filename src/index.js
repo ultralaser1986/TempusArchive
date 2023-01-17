@@ -324,8 +324,8 @@ class TempusArchive {
       if (status.dupes) console.log('Delete Duplicate Videos:', status.dupes)
       if (status.privacy) console.log('Change Video Privacy:', status.privacy)
       if (status.update) console.log('Change Description Chain Id:', status.update)
-      if (status.skips) console.log('Skipped records:', status.skips)
-      if (status.wipes) console.log('Wiped records:', status.wipes)
+      if (status.skips) console.log('Skipped Records:', status.skips)
+      if (status.wipes) console.log('Wiped Records:', status.wipes)
 
       util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)
 
