@@ -142,8 +142,8 @@ class TempusArchive {
     }, progress)
 
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
-    if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
     if (rec.splits) time = rec.splits[0].duration - 0.1
+    if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
     let thumbnail = await this.#thumb(file, time)
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
