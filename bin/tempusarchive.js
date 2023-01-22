@@ -12,6 +12,31 @@ let MEDAL = '[TempusArchive]'
 let MEDAL_OPEN = '╔════════╗'
 let MEDAL_CLOSE = '╚════════╝'
 
+let start = Date.now()
+
+let once = false
+let KILLERS = ['error', 'exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'uncaughtException', 'unhandledRejection']
+KILLERS.forEach(killer => process.on(killer, e => {
+  try {
+    if (!once) {
+      once = true
+
+      console.log(`\n[TIMELOG] Start: ${start}, End: ${Date.now()}, Elapsed: ${util.formatTime(Date.now() - start, 0)}`)
+
+      util.remove(ta.tmp)
+
+      if (ta.tr.app) {
+        ta.tr.app.send('quit')
+        ta.tr.app.exit()
+      }
+
+      ta.exit(true)
+    }
+  } catch (e) {}
+  if (['uncaughtException', 'unhandledRejection'].includes(killer)) console.error(e)
+  if (killer !== 'exit') process.exit()
+}))
+
 program
   .command('run')
   .description('start rendering')
@@ -245,12 +270,3 @@ async function run (ids, opts) {
 
   await ta.exit()
 }
-
-let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
-KILLERS.forEach(killer => process.on(killer, () => {
-  try {
-    util.remove(ta.tmp)
-    if (ta.tr.app) ta.exit(true)
-    if (killer !== 'exit') process.exit()
-  } catch (e) {}
-}))
