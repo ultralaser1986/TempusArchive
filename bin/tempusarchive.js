@@ -205,9 +205,9 @@ async function run (ids, opts) {
     try {
       file = await ta.record(rec, 'default', 'default')
     } catch (e) {
-      console.log('\n', MEDAL_CLOSE, 'Error during record! Aborting process...')
-      console.error(e)
-      return
+      console.log('\n')
+      console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
+      throw Error(e)
     }
 
     if (file === null) {
@@ -234,9 +234,9 @@ async function run (ids, opts) {
         util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
         util.remove(file)
       } catch (e) {
-        console.log('\n', MEDAL_CLOSE, 'Error during upload! Aborting process...')
-        console.error(e)
-        return
+        console.log('\n')
+        console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
+        throw Error(e)
       }
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
   }
