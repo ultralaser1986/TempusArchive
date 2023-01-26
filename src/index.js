@@ -42,7 +42,7 @@ class TempusArchive {
 
   async fetch (id) {
     let rec = await TemRec.fetch(id)
-    rec.end = rec.start + (rec.time * (200 / 3))
+    rec.end = Math.floor(rec.start + (rec.time * (200 / 3)))
     rec.key = `${rec.class}_${rec.zone}`
     rec.diff = await tempus.getDiffFromRecord(rec)
 
