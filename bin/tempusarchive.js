@@ -218,6 +218,8 @@ async function run (ids, opts) {
 
     let rec = await ta.fetch(id)
 
+    id = rec.id // incase we load a json file
+
     console.log(MEDAL_OPEN, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
     if (!opts.unlisted && opts.upload && ta.uploads[rec.key]?.[id]) {

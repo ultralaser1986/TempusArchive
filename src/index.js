@@ -7,6 +7,8 @@ let TemRec = require('temrec')
 let ListStore = require('./liststore')
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
+let REQUIRED_RECORD_PROPS = ['id', 'key', 'date', 'class', 'tier', 'zone', 'map', 'demo', 'start', 'end', 'time', 'player', 'nick', 'z', 'z.demo', 'z.type', 'z.index', 'z.custom', 'display', 'diff']
+
 class TempusArchive {
   constructor (config) {
     this.cfg = require(config)
@@ -41,21 +43,37 @@ class TempusArchive {
   }
 
   async fetch (id) {
-    let rec = await TemRec.fetch(id)
+    let rec = null
+
+    if (id.endsWith('.json')) {
+      rec = JSON.parse(util.read(id))
+    } else {
+      rec = await TemRec.fetch(id)
+      rec.diff = await tempus.getDiffFromRecord(rec)
+
+      if (rec.rank === 1 && rec.z.type === 'map') {
+        let wrs = await tempus.getMapWRS(rec.map)
+        rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
+        if (!rec.splits?.length) rec.splits = null
+      }
+    }
+
     rec.end = Math.floor(rec.start + (rec.time * (200 / 3)))
     rec.key = `${rec.class}_${rec.zone}`
-    rec.diff = await tempus.getDiffFromRecord(rec)
-
-    if (rec.rank === 1 && rec.z.type === 'map') {
-      let wrs = await tempus.getMapWRS(rec.map)
-      rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
-      if (!rec.splits?.length) rec.splits = null
-    }
 
     let nick = this.players[rec.player]
     if (nick) nick = Object.keys(nick)[0]
 
     rec.display = tempus.formatDisplay(rec, nick)
+
+    for (let props of REQUIRED_RECORD_PROPS) {
+      let [prop, next] = props.split('.')
+      if (Object.hasOwn(rec, prop)) {
+        if (!next || Object.hasOwn(rec[prop], next)) continue
+      }
+      throw Error(`Record has missing property: ${props}`)
+    }
+
     return rec
   }
 
