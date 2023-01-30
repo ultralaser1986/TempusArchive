@@ -4,8 +4,6 @@ let ph = require('path')
 let crypto = require('crypto')
 let risk = require('./risk')
 
-let util = require('./util')
-
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 let CHUNK_SIZE = 262144 * 20
