@@ -262,8 +262,15 @@ async function run (ids, opts) {
         util.remove(file)
       } catch (e) {
         console.log('\n')
-        console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
-        throw Error(e)
+        if (e.indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') > 0) {
+          console.log(MEDAL_CLOSE, 'Upload limit hit! Waiting 12h...')
+          await new Promise(resolve => setTimeout(resolve, 43200000))
+          await ta.exit(true)
+          return
+        } else {
+          console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
+          throw Error(e)
+        }
       }
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
   }
