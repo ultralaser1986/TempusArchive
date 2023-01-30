@@ -263,9 +263,9 @@ async function run (ids, opts) {
       } catch (e) {
         console.log('\n')
         if (e.indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') > 0) {
+          await ta.exit(true)
           console.log(MEDAL_CLOSE, 'Upload limit hit! Waiting 12h...')
           await new Promise(resolve => setTimeout(resolve, 43200000))
-          await ta.exit(true)
           return
         } else {
           console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
