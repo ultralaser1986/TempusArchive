@@ -43,6 +43,7 @@ class TempusArchive {
   }
 
   async fetch (id) {
+    id = id.toString()
     let rec = null
 
     if (id.endsWith('.json')) {
