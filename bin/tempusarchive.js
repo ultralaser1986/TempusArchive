@@ -216,7 +216,15 @@ async function run (ids, opts) {
 
     let id = ids[i]
 
-    let rec = await ta.fetch(id)
+    let rec = await ta.fetch(id).catch(e => {
+      if (e.toString().indexOf('not found!') >= 0) return null
+      throw e
+    })
+
+    if (!rec) {
+      console.log(MEDAL, `Record ${id} not found! Skipping...`)
+      continue
+    }
 
     id = rec.id // incase we load a json file
 
