@@ -8,7 +8,7 @@
         "override": { "cmd": "spec_player \"STEAM_0:0:115234\"" } 
     },
     {
-        "records": [ 4398552 ], 
+        "records": [ 4398552, 4868568 ], 
         "override": { "skip": true }
     },
     {
