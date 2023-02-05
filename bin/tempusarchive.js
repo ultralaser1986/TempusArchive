@@ -270,7 +270,7 @@ async function run (ids, opts) {
         util.remove(file)
       } catch (e) {
         console.log('\n')
-        if (e.indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') > 0) {
+        if (e.toString().indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') >= 0) {
           await ta.exit(true)
           console.log(MEDAL_CLOSE, 'Upload limit hit! Waiting 12h...')
           await new Promise(resolve => setTimeout(resolve, 43200000))
