@@ -180,7 +180,11 @@ class TempusArchive {
         })
       } catch (e) {
         await new Promise(resolve => setTimeout(resolve, 1000))
-        if (i === retries) throw e
+        if (i === retries) {
+          if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+          try { await this.yt.deleteVideo(vid) } catch (e) { console.error(e) }
+          throw e
+        }
         if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed updating metadata, retrying (${i + 1}/${retries})...`)
         continue
       }
