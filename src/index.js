@@ -403,6 +403,7 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let points = []
+    let layer = 1
 
     for (let split of splits) {
       let name = split.type[0].toUpperCase() + split.type.slice(1) + ' ' + split.zoneindex
@@ -420,10 +421,13 @@ class TempusArchive {
 
       points.push(
         template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
+          .replaceAll('%LAYER%', layer)
           .replaceAll('%NAME%', name)
           .replaceAll('%PRIMARY%', primary).replaceAll('%PRI%', pri).replaceAll('%MARY%', mary)
           .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
       )
+
+      layer++
     }
 
     subs = subs.replace(template, points.join('\n'))
