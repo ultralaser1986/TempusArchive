@@ -404,9 +404,9 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let points = []
-    let layer = 1
 
-    for (let split of splits) {
+    for (let i = 0; i < splits.length; i++) {
+      let split = splits[i]
       let name = split.type[0].toUpperCase() + split.type.slice(1) + ' ' + split.zoneindex
       let time = split.duration
       let diff = (split.duration - split.compared_duration)
@@ -420,15 +420,20 @@ class TempusArchive {
 
       if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
 
+      let next = splits[i + 1]
+      if (next) next = next.duration - split.duration
+
       points.push(
-        template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
-          .replaceAll('%LAYER%', layer)
+        template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => {
+          let dur = Number(b) || 0
+          if (next && dur > next) dur = next
+          return t(pad + time + dur)
+        })
+          .replaceAll('%LAYER%', i + 1)
           .replaceAll('%NAME%', name)
           .replaceAll('%PRIMARY%', primary).replaceAll('%PRI%', pri).replaceAll('%MARY%', mary)
           .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
       )
-
-      layer++
     }
 
     subs = subs.replace(template, points.join('\n'))
