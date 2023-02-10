@@ -235,19 +235,23 @@ async function run (ids, opts) {
       continue
     }
 
-    let file = null
+    let file = util.join(ta.cfg.output, id + '.mp4')
 
-    try {
-      file = await ta.record(rec, 'default', 'default')
-    } catch (e) {
-      console.log('\n')
-      console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
-      throw Error(e)
-    }
+    if (opts.ready && util.exists(file) && util.exists(ta.cfg.velo)) {
+      console.log(MEDAL, `Using existing file: "${file}"`)
+    } else {
+      try {
+        file = await ta.record(rec, 'default', 'default')
+      } catch (e) {
+        console.log('\n')
+        console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
+        throw Error(e)
+      }
 
-    if (file === null) {
-      console.log(MEDAL_CLOSE, 'Skipping record.')
-      continue
+      if (file === null) {
+        console.log(MEDAL_CLOSE, 'Skipping record.')
+        continue
+      }
     }
 
     time += rec.time
@@ -259,6 +263,10 @@ async function run (ids, opts) {
       await ta.exit(true)
       return
     }
+
+    opts.ready = true
+
+    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i, time, size } }))
 
     if (opts.upload) {
       try {
@@ -281,6 +289,8 @@ async function run (ids, opts) {
         }
       }
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
+
+    opts.ready = false
   }
 
   util.remove(ta.cfg.state)
