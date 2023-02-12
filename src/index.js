@@ -164,7 +164,7 @@ class TempusArchive {
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
     if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
-    let thumbnail = await this.#thumb(file, time)
+    let thumbnail = await this.#thumb(file, time, this.cfg.thumb)
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
@@ -222,7 +222,7 @@ class TempusArchive {
       this.uploads.export(this.cfg.uploads)
     }
 
-    util.remove([this.tmp, this.cfg.velo])
+    util.remove([this.tmp, this.cfg.velo, this.cfg.thumb])
 
     return vid
   }
@@ -536,9 +536,8 @@ class TempusArchive {
     return res
   }
 
-  async #thumb (file, seconds) {
-    let path = util.join(this.tmp, this.cfg.thumb)
-    await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
+  async #thumb (file, seconds, path) {
+    await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -y "${path}"`)
     return 'data:image/png;base64,' + util.read(path, 'base64')
   }
 

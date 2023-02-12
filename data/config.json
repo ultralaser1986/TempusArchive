@@ -12,7 +12,7 @@
     "endings": "data/effects/endings",
     "splits": "data/effects/splits",
     "velo": "data/output/velo.txt",
-    "thumb": "thumb.png",
+    "thumb": "data/output/thumb.png",
     "subs": "subs.ass",
     "sfx": "sfx.wav",
     "curves": "data/curves.acv",
