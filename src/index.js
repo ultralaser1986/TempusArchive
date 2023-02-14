@@ -161,43 +161,40 @@ class TempusArchive {
       tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
     }, progress)
 
+    let re = {
+      fail: x => {
+        return async (i, r, t) => {
+          if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+        }
+      },
+      del: async e => {
+        if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+        try { await this.yt.deleteVideo(vid) } catch (e) { console.error(e) }
+        throw e
+      }
+    }
+
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
     if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
-    let thumbnail = await this.#thumb(file, time, this.cfg.thumb)
+    let thumbnail = await retry(() => this.#thumb(file, time, this.cfg.thumb), re.fail('making thumbnail'), e => { throw e })
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
-
-    let retries = 5
-    for (let i = 0; i <= retries; i++) {
-      try {
-        await this.yt.updateVideo(vid, {
-          videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
-          gameTitle: { newKgEntityId: this.cfg.meta.game },
-          addToPlaylist: { addToPlaylistIds: [pl] }
-        })
-      } catch (e) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        if (i === retries) {
-          if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
-          try { await this.yt.deleteVideo(vid) } catch (e) { console.error(e) }
-          throw e
-        }
-        if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed updating metadata, retrying (${i + 1}/${retries})...`)
-        continue
-      }
-      break
-    }
+    await retry(() => this.yt.updateVideo(vid, {
+      videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
+      gameTitle: { newKgEntityId: this.cfg.meta.game },
+      addToPlaylist: { addToPlaylistIds: [pl] }
+    }), re.fail('updating metadata'), re.del)
 
     if (override) {
       if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
-      await this.yt.updateVideo(override, {
+      await retry(() => this.yt.updateVideo(override, {
         privacyState: { newPrivacy: 'UNLISTED' },
         addToPlaylist: { deleteFromPlaylistIds: [pl] }
-      })
+      }), re.fail(`updating metadata of old record (${override})`), re.del)
     }
 
     if (util.exists(this.cfg.velo)) {
@@ -206,13 +203,15 @@ class TempusArchive {
       // captions over 3h40min~ turned completely off
       if (rec.time <= this.cfg.caption_limit_max) {
         if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding captions...')
-        await this.yt.addCaptions(vid, [
-          this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
-          this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
-          this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
-          this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
-          this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
-        ])
+        await retry(async () => {
+          await this.yt.addCaptions(vid, [
+            this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
+            this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
+            this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
+            this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
+            this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
+          ])
+        }, re.fail('adding captions'), re.del)
       }
     }
 
@@ -578,3 +577,17 @@ class TempusArchive {
 }
 
 module.exports = TempusArchive
+
+async function retry (fn, fail, error) {
+  let retries = 5
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn()
+    } catch (e) {
+      if (i === retries) return error ? error(e) : false
+      let time = (i + 1) * 10 * 1000
+      if (fail) await fail(i, retries, time)
+      await new Promise(resolve => setTimeout(resolve, time))
+    }
+  }
+}
