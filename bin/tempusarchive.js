@@ -237,7 +237,6 @@ async function run (ids, opts) {
 
     let file = util.join(ta.cfg.output, id + '.mp4')
 
-    console.log(MEDAL, `Re-Record Checks: ${opts.ready} ${util.exists(file)} ${util.exists(ta.cfg.velo)}`)
     if (opts.ready && util.exists(file) && util.exists(ta.cfg.velo)) {
       console.log(MEDAL, `Using existing file: "${file}"`)
     } else {
