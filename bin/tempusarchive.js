@@ -155,6 +155,37 @@ program
   })
 
 program
+  .command('delete')
+  .description('delete a youtube video')
+  .argument('<video id>', 'youtube video id to delete')
+  .action(async (vid) => {
+    ta.tr.init()
+    await ta.yt.updateSession()
+
+    let res = await ta.yt.listVideos([vid])
+    let title = res.items[0].title
+
+    await ta.yt.updateVideo(vid, {
+      addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) }
+    })
+
+    await ta.yt.deleteVideo(vid)
+
+    for (let zone in ta.uploads) {
+      for (let id in ta.uploads[zone]) {
+        if (vid === ta.uploads[zone][id]) {
+          delete ta.uploads[zone][id]
+          if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
+          ta.uploads.export()
+          break
+        }
+      }
+    }
+
+    console.log(`Deleted: ${title} (${vid})`)
+  })
+
+program
   .name('tempusarchive')
   .parse()
 
