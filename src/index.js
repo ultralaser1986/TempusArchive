@@ -173,7 +173,8 @@ class TempusArchive {
       },
       del: async e => {
         if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
-        try { await this.yt.deleteVideo(vid) } catch (e) { console.error(e) }
+
+        await retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
         throw e
       }
     }
