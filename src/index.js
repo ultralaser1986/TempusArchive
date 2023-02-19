@@ -370,13 +370,16 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let primary = util.formatTime(time * 1000)
-    let secondary = util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) || ''
-    if (secondary && diff >= 0) secondary = '+' + secondary
+    let secondary = diff ? util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) : ''
+    if (secondary) {
+      if (diff > 0) secondary = '+' + secondary
+      else if (secondary[0] !== '-') secondary = '-' + secondary
+    } else {
+      subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
+    }
 
     let [pri, mary] = primary.split('.')
     let [secon, dary] = secondary.split('.')
-
-    if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
 
     subs = subs
       .replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
