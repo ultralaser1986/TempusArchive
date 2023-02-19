@@ -150,7 +150,7 @@ class TempusArchive {
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
       `Date: ${new Date(rec.date * 1000).toUTCString()}`,
       '',
-      'Play On Tempus Here: https://www.tempus.xyz',
+      'Play On Tempus Here: https://tempus.xyz',
       'Tempus Network Discord: https://discord.gg/5c7eSKUMkf'
     ].filter(x => x !== null).join('\n')
 
