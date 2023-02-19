@@ -145,9 +145,13 @@ class TempusArchive {
       override ? `Previous Record: https://youtu.be/${override}` : '',
       '',
       tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
+      `Map: https://tempus.xyz/maps/${rec.map}`,
       `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
-      `Date: ${new Date(rec.date * 1000).toUTCString()}`
+      `Date: ${new Date(rec.date * 1000).toUTCString()}`,
+      '',
+      'Play On Tempus Here: https://www.tempus.xyz',
+      'Tempus Network Discord: https://discord.gg/5c7eSKUMkf'
     ].filter(x => x !== null).join('\n')
 
     let chapters = await this.#chapters(rec)
