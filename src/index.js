@@ -375,7 +375,7 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let primary = util.formatTime(time * 1000)
-    let secondary = diff ? util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) : ''
+    let secondary = diff !== null ? util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) : ''
     if (secondary) {
       if (diff > 0) secondary = '+' + secondary
       else if (secondary[0] !== '-') secondary = '-' + secondary
