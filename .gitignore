@@ -7,3 +7,4 @@ sound.cache
 STATE
 /data/report.json
 /data/demos
+!players.list
