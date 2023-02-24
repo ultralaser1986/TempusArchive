@@ -1,0 +1,109 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 20px;
+            background-color: #2a2725;
+            color: #ece3cb;
+        }
+
+        #thumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: center;
+        }
+
+        .item {
+            overflow: hidden;
+            height: 66px;
+        }
+
+        .item>img {
+            position: relative;
+            top: -12px;
+        }
+
+        .item:hover {
+            cursor: pointer;
+        }
+
+        .check {
+            outline: 2px solid red;
+        }
+
+        .check>img {
+            opacity: 0.2;
+        }
+
+        #box {
+            border-radius: 5px;
+            width: 100%;
+            height: 100%;
+            outline: 4px solid #888;
+        }
+
+        #box p {
+            font-size: 30px;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #eee;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: 0;
+            transform: translate(-50%, -50%);
+        }
+
+        #box input {
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="box">
+        <p>Put uploads.list here</p>
+        <input id="input" type="file" accept=".list">
+    </div>
+    <div id="thumbs" class="hidden"></div>
+    <script>
+        let box = document.getElementById('box')
+        let input = document.getElementById('input')
+        let thumbs = document.getElementById('thumbs')
+
+        input.addEventListener('change', event => {
+            let file = event.target.files[0]
+            if (file.name !== 'uploads.list') {
+                return alert('File is not an uploads.list file!')
+            }
+            let reader = new FileReader()
+            reader.readAsText(file)
+            reader.onerror = () => alert(reader.error)
+
+            reader.onload = () => {
+                box.classList.add('hidden')
+                thumbs.classList.remove('hidden')
+                let uploads = reader.result.split('\n').map(x => x.split(" ").pop())
+
+                for (let upload of uploads) {
+                    thumbs.insertAdjacentHTML('beforeEnd', `<div class="item" data-videoId="${upload}" onclick="toggle(this)"><img src="https://img.youtube.com/vi/${upload}/3.jpg"></div>`)
+                }
+            }
+        })
+
+        function toggle(element) {
+            element.classList.toggle('check')
+
+            console.log(Array.from(document.getElementsByClassName('check')).map(x => x.getAttribute('data-videoId')))
+        }
+    </script>
+</body>
+
+</html>
