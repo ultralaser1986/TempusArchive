@@ -168,6 +168,7 @@ class TempusArchive {
     let re = {
       fail: x => {
         return async (i, r, t) => {
+          await this.yt.updateSession()
           if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
         }
       },
