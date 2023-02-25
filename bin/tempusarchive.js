@@ -155,6 +155,20 @@ program
   })
 
 program
+  .command('info')
+  .description('view info about a youtube video')
+  .argument('<video id>', 'youtube video id')
+  .action(async (vid) => {
+    ta.tr.init()
+    await ta.yt.updateSession()
+
+    let res = await ta.yt.listVideos([vid])
+    let title = res.items[0].title
+
+    console.log(`${title} (${vid})`)
+  })
+
+program
   .command('delete')
   .description('delete a youtube video')
   .argument('<video id>', 'youtube video id to delete')
