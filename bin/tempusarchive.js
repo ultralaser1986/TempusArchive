@@ -45,8 +45,8 @@ program
   .option('-nt, --ntime <seconds>', 'limit amount of records rendered by seconds', 0)
   .option('-ns, --nsize <bytes>', 'limit amount of records rendered by bytes', 0)
   .option('-s, --shuffle', 'randomize the order of the records', false)
-  .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
-  // .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  .option('-l, --no-upload', 'skip uploading and don\'t delete output files', true)
+  .option('-k, --keep', 'don\'t delete output files', false)
   .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
@@ -320,7 +320,8 @@ async function run (ids, opts) {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
         }, opts.unlisted)
         util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
-        util.remove(file)
+        if (opts.keep) console.log(MEDAL_CLOSE, `Output: "${file}"`)
+        else util.remove(file)
       } catch (e) {
         console.log('\n')
         if (e.toString().indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') >= 0) {
