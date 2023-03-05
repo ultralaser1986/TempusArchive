@@ -6,7 +6,7 @@ let risk = require('./risk')
 
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
-let CHUNK_SIZE = 262144 * 20
+let CHUNK_SIZE = 262144 * 200
 
 function genUploadId () {
   let a = Array(36)
