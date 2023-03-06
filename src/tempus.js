@@ -4,6 +4,9 @@ let util = require('./util')
 let base = 'https://tempus.xyz/api'
 
 module.exports = {
+  async getActivity () {
+    return await dp(base + '/activity').json().catch(() => null)
+  },
   async getMapList () {
     return await dp(base + '/maps/detailedList').json().catch(() => null)
   },
@@ -40,6 +43,12 @@ module.exports = {
       case 6: return 'Insane'
     }
     return 'Unknown'
+  },
+  formatClass (num) {
+    switch (num) {
+      case 3: return 'S'
+      case 4: return 'D'
+    }
   },
   async getMapWRS (map) {
     return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)

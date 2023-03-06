@@ -233,7 +233,7 @@ class TempusArchive {
     return vid
   }
 
-  async update (opts = { players: true, records: true, uploads: true }) {
+  async update (opts = { players: true, records: true, uploads: true }, full, tricks) {
     if (opts.players) {
       let num = 0
       let nicknames = await dp(this.cfg.nickdata).json()
@@ -252,30 +252,70 @@ class TempusArchive {
     }
 
     if (opts.records) {
-      let records = new ListStore()
+      if (full || tricks) {
+        let records = tricks ? this.records : new ListStore()
 
-      let maps = await tempus.getMapList()
+        let maps = await tempus.getMapList()
 
-      for (let i = 0; i < maps.length; i++) {
-        let map = maps[i]
-        // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
-        for (let zone of this.cfg.zones) {
-          let count = map.zone_counts[zone]
-          for (let j = 0; j < count; j++) {
-            let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
-            let s = rec.results.soldier[0]
-            let d = rec.results.demoman[0]
-            if (s) records.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
-            if (d) records.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
+        let count = 0
 
-            util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${count})`)
+        for (let i = 0; i < maps.length; i++) {
+          let map = maps[i]
+          // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
+          for (let zone of this.cfg.zones) {
+            if (tricks && zone !== 'trick') continue
+            let zones = map.zone_counts[zone]
+            for (let j = 0; j < zones; j++) {
+              let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
+              let s = rec.results.soldier[0]
+              let d = rec.results.demoman[0]
+              if (s) {
+                let z = `S_${rec.zone_info.id}`
+                delete records[z]
+                records.add(z, s.id, !!s.demo_info?.url)
+                count++
+              }
+              if (d) {
+                let z = `D_${rec.zone_info.id}`
+                delete records[z]
+                records.add(z, d.id, !!d.demo_info?.url)
+                count++
+              }
+
+              util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${zones})`)
+            }
           }
         }
-      }
-      util.log(`[Records] Fetched ${Object.keys(records).length} records!\n`)
+        if (tricks) util.log(`[Records] Fetched ${count} trick records!\n`)
+        else util.log(`[Records] Fetched ${count} records!\n`)
 
-      records.export(this.cfg.records)
-      this.records = records
+        records.export(this.cfg.records)
+        this.records = records
+      } else {
+        let activity = await tempus.getActivity()
+
+        let has = 0
+        let updated = 0
+        let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs]
+        for (let rec of wrs) {
+          let tfclass = tempus.formatClass(rec.record_info.class)
+          let id = rec.record_info.id
+          let demo = !!rec.demo_info?.url
+          let key = `${tfclass}_${rec.zone_info.id}`
+
+          if (Object.hasOwn(this.records[key], id)) {
+            has++
+            if (this.records[key][id] !== demo) updated++
+          }
+
+          delete this.records[key]
+          this.records.add(key, id, demo)
+        }
+        util.log(`[Records] Updated ${wrs.length - has + updated} records! (NO TRICK RECORDS)\n`)
+        if (!has) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
+
+        this.records.export(this.cfg.records)
+      }
     }
 
     if (opts.uploads) {
