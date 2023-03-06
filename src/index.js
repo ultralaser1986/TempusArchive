@@ -42,7 +42,7 @@ class TempusArchive {
     return pending
   }
 
-  async fetch (id) {
+  async fetch (id, minimal = false) {
     id = id.toString()
     let rec = null
 
@@ -50,13 +50,15 @@ class TempusArchive {
       rec = JSON.parse(util.read(id))
     } else {
       rec = await TemRec.fetch(id)
-      rec.diff = await tempus.getDiffFromRecord(rec)
+      if (!minimal) {
+        rec.diff = await tempus.getDiffFromRecord(rec)
 
-      if (rec.rank === 1 && rec.z.type === 'map') {
-        let wrs = await tempus.getMapWRS(rec.map)
-        rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
-        if (rec.splits) rec.splits = rec.splits.filter(x => x.duration !== null)
-        if (!rec.splits?.length) rec.splits = null
+        if (rec.rank === 1 && rec.z.type === 'map') {
+          let wrs = await tempus.getMapWRS(rec.map)
+          rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
+          if (rec.splits) rec.splits = rec.splits.filter(x => x.duration !== null)
+          if (!rec.splits?.length) rec.splits = null
+        }
       }
     }
 
@@ -68,12 +70,14 @@ class TempusArchive {
 
     rec.display = tempus.formatDisplay(rec, nick)
 
-    for (let props of REQUIRED_RECORD_PROPS) {
-      let [prop, next] = props.split('.')
-      if (Object.hasOwn(rec, prop)) {
-        if (!next || Object.hasOwn(rec[prop], next)) continue
+    if (!minimal) {
+      for (let props of REQUIRED_RECORD_PROPS) {
+        let [prop, next] = props.split('.')
+        if (Object.hasOwn(rec, prop)) {
+          if (!next || Object.hasOwn(rec[prop], next)) continue
+        }
+        throw Error(`Record has missing property: ${props}`)
       }
-      throw Error(`Record has missing property: ${props}`)
     }
 
     return rec
@@ -294,25 +298,31 @@ class TempusArchive {
       } else {
         let activity = await tempus.getActivity()
 
-        let has = 0
         let updated = 0
+        let demoless = 0
         let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs]
-        for (let rec of wrs) {
+        for (let i = 0; i < wrs.length; i++) {
+          let rec = wrs[i]
           let tfclass = tempus.formatClass(rec.record_info.class)
           let id = rec.record_info.id
-          let demo = !!rec.demo_info?.url
           let key = `${tfclass}_${rec.zone_info.id}`
 
-          if (Object.hasOwn(this.records[key], id)) {
-            has++
-            if (this.records[key][id] !== demo) updated++
-          }
+          if (!this.records[key] || !this.records[key][id]) { // only update if record is missing / has no demo
+            util.log(`[Records] ${i + 1}/${wrs.length} - ${rec.map_info.name} [${rec.zone_info.type} ${rec.zone_info.zoneindex}]`)
+            let r = await this.fetch(id, true).catch(() => null)
+            if (!r) {
+              demoless++
+              continue
+            }
 
-          delete this.records[key]
-          this.records.add(key, id, demo)
+            delete this.records[key]
+            this.records.add(key, id, !!r.demo)
+
+            updated++
+          }
         }
-        util.log(`[Records] Updated ${wrs.length - has + updated} records! (NO TRICK RECORDS)\n`)
-        if (!has) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
+        util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo) <NO TRICK RECORDS>\n`)
+        if (updated + demoless === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
 
         this.records.export(this.cfg.records)
       }
