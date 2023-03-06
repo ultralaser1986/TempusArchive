@@ -105,6 +105,7 @@ class TempusArchive {
       timed: true,
       cubemaps: false,
       vis: false,
+      reload: true,
       ffmpeg: {
         '!sfx': end.sfx,
         subs: end.subs,
