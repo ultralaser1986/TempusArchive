@@ -163,11 +163,7 @@ class TempusArchive {
     if (chapters) desc += chapters
 
     let vid = await this.yt.uploadVideo(file, {
-      title: (single ? '! ' : '') + rec.display,
-      description: desc,
-      visibility: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
-      category: this.cfg.meta.category,
-      tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
+      draftState: { isDraft: true }
     }, progress)
 
     let re = {
@@ -195,6 +191,12 @@ class TempusArchive {
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
     await retry(() => this.yt.updateVideo(vid, {
+      draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
+      privacyState: { newPrivacy: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC') },
+      title: { newTitle: (single ? '! ' : '') + rec.display },
+      description: { newDescription: desc },
+      category: { newCategoryId: this.cfg.meta.category },
+      tags: { newTags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index] },
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
       gameTitle: { newKgEntityId: this.cfg.meta.game },
       addToPlaylist: { addToPlaylistIds: [pl] }
