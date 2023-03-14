@@ -286,7 +286,7 @@ async function run (ids, opts) {
 
     let file = util.join(ta.cfg.output, id + '.mp4')
 
-    if (opts.ready && util.exists(file) && util.exists(ta.cfg.velo)) {
+    if (util.exists(file) && util.exists(ta.cfg.velo)) {
       console.log(MEDAL, `Using existing file: "${file}"`)
     } else {
       try {
@@ -313,10 +313,6 @@ async function run (ids, opts) {
       return
     }
 
-    opts.ready = true
-
-    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i, time, size } }))
-
     if (opts.upload) {
       try {
         util.log(`${MEDAL_CLOSE} Uploading...`)
@@ -339,8 +335,6 @@ async function run (ids, opts) {
         }
       }
     } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
-
-    opts.ready = false
   }
 
   util.remove(ta.cfg.state)
