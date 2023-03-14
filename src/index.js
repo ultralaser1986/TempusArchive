@@ -135,8 +135,6 @@ class TempusArchive {
   }
 
   async upload (rec, file, progress, single = false) {
-    util.mkdir(this.tmp)
-
     await this.yt.updateSession()
 
     let override = this.uploads[rec.key]
@@ -235,8 +233,6 @@ class TempusArchive {
       this.uploads.add(rec.key, rec.id, vid)
       this.uploads.export(this.cfg.uploads)
     }
-
-    util.remove(this.tmp)
 
     return vid
   }
@@ -512,8 +508,10 @@ class TempusArchive {
     let zones = this.levelzones[rec.map]
 
     if (zones && !['bonus', 'trick'].includes(rec.z.type)) {
+      util.mkdir(this.tmp)
       let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
       let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
+      util.remove(this.tmp)
 
       if (boxes.length) {
         let desc = '\n\n0:00 Start'
