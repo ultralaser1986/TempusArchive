@@ -101,7 +101,7 @@
         function toggle(element) {
             element.classList.toggle('check')
 
-            console.log(Array.from(document.getElementsByClassName('check')).map(x => x.getAttribute('data-videoId')))
+            console.log(Array.from(document.getElementsByClassName('check')).map(x => x.getAttribute('data-videoId')).join(" "))
         }
     </script>
 </body>
