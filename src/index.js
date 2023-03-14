@@ -182,7 +182,12 @@ class TempusArchive {
 
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
-    if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
+
+    if (this.cfg.DEBUG) {
+      if (util.exists(rec.thumb)) {
+        console.log(`\n[DEBUGLOG] Reusing thumbnail: "${rec.thumb}"`)
+      } else console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
+    }
     let thumbnail = await retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
@@ -597,7 +602,7 @@ class TempusArchive {
   }
 
   async #thumb (file, seconds, path) {
-    await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -y "${path}"`)
+    if (!util.exists(path)) await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -y "${path}"`)
     return 'data:image/png;base64,' + util.read(path, 'base64')
   }
 
