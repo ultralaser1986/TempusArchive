@@ -71,9 +71,14 @@ program
 program
   .command('cleanup')
   .description('delete leftover temporary files')
-  .action(() => {
+  .option('-f, --full', 'delete output folder as well')
+  .action(opts => {
     ta.tr.init()
     util.remove([ta.cfg.state, ta.cfg.report])
+    if (opts.full) {
+      util.remove(ta.cfg.output)
+      util.mkdir(ta.cfg.output)
+    }
   })
 
 program
