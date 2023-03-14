@@ -127,6 +127,8 @@ class TempusArchive {
 
     let file = await this.tr.record(rec, opts)
 
+    util.copy(this.cfg.velo, rec.velo)
+
     util.remove(this.tmp)
 
     return file
@@ -184,7 +186,7 @@ class TempusArchive {
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
     if (this.cfg.DEBUG) console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
-    let thumbnail = await retry(() => this.#thumb(file, time, this.cfg.thumb), re.fail('making thumbnail'), e => { throw e })
+    let thumbnail = await retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
@@ -210,7 +212,7 @@ class TempusArchive {
       }), re.fail(`updating metadata of old record (${override})`), re.del)
     }
 
-    if (util.exists(this.cfg.velo)) {
+    if (util.exists(rec.velo)) {
       // captions over 13min~ wont have styling
       // captions over 1h50min~ break, so we half their fps
       // captions over 3h40min~ turned completely off
@@ -218,11 +220,11 @@ class TempusArchive {
         if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding captions...')
         await retry(async () => {
           await this.yt.addCaptions(vid, [
-            this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
-            this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
-            this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
-            this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
-            this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
+            this.#captions(rec.velo, rec, 0, 'Run Timer'),
+            this.#captions(rec.velo, rec, 1, 'Speedo (Horizontal)'),
+            this.#captions(rec.velo, rec, 2, 'Speedo (Vertical)'),
+            this.#captions(rec.velo, rec, 3, 'Speedo (Absolute)'),
+            this.#captions(rec.velo, rec, 4, 'Tick of Demo')
           ])
         }, re.fail('adding captions'), re.del)
       }
@@ -234,7 +236,7 @@ class TempusArchive {
       this.uploads.export(this.cfg.uploads)
     }
 
-    util.remove([this.tmp, this.cfg.velo, this.cfg.thumb])
+    util.remove(this.tmp)
 
     return vid
   }

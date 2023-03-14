@@ -73,7 +73,7 @@ program
   .description('delete leftover temporary files')
   .action(() => {
     ta.tr.init()
-    util.remove([ta.cfg.state, ta.cfg.report, ta.cfg.velo, ta.cfg.thumb])
+    util.remove([ta.cfg.state, ta.cfg.report])
   })
 
 program
@@ -284,29 +284,31 @@ async function run (ids, opts) {
       continue
     }
 
-    let file = util.join(ta.cfg.output, id + '.mp4')
+    rec.file = util.join(ta.cfg.output, id + '.mp4')
+    rec.velo = util.join(ta.cfg.output, id + '.velo')
+    rec.thumb = util.join(ta.cfg.output, id + '.png') // created in upload step
 
-    if (util.exists(file) && util.exists(ta.cfg.velo)) {
-      console.log(MEDAL, `Using existing file: "${file}"`)
+    if (util.exists(rec.file) && util.exists(rec.velo)) {
+      console.log(MEDAL, `Using existing file: "${rec.file}"`)
     } else {
       try {
-        file = await ta.record(rec, 'default', 'default')
+        rec.file = await ta.record(rec, 'default', 'default')
       } catch (e) {
         console.log('\n')
         console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
         throw Error(e)
       }
 
-      if (file === null) {
+      if (rec.file === null) {
         console.log(MEDAL_CLOSE, 'Skipping record.')
         continue
       }
     }
 
     time += rec.time
-    size += util.size(file, true)
+    size += util.size(rec.file, true)
 
-    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
+    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${rec.file}"`)
     if (res.stdout.trim() === '1024x1024') {
       console.log(MEDAL_CLOSE, 'Error! Video output is corrupted.')
       await ta.exit(true)
@@ -316,12 +318,12 @@ async function run (ids, opts) {
     if (opts.upload) {
       try {
         util.log(`${MEDAL_CLOSE} Uploading...`)
-        let vid = await ta.upload(rec, file, progress => {
+        let vid = await ta.upload(rec, rec.file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
         }, opts.unlisted)
-        util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
-        if (opts.keep) console.log(MEDAL_CLOSE, `Output: "${file}"`)
-        else util.remove(file)
+        util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(rec.file)}>\n`)
+        if (opts.keep) console.log(MEDAL_CLOSE, `Output: "${rec.file}"`)
+        else util.remove([rec.file, rec.velo, rec.thumb])
       } catch (e) {
         console.log('\n')
         if (e.toString().indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') >= 0) {
@@ -334,7 +336,7 @@ async function run (ids, opts) {
           throw Error(e)
         }
       }
-    } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
+    } else console.log(MEDAL_CLOSE, `Output: "${rec.file}"`)
   }
 
   util.remove(ta.cfg.state)
