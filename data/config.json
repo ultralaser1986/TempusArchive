@@ -11,7 +11,7 @@
     "captions": "data/effects/captions",
     "endings": "data/effects/endings",
     "splits": "data/effects/splits",
-    "velo": "data/tmp/velo.txt",
+    "velo": "data/output/velo.txt",
     "subs": "subs.ass",
     "sfx": "sfx.wav",
     "curves": "data/curves.acv",

@@ -128,8 +128,7 @@ class TempusArchive {
     let file = await this.tr.record(rec, opts)
 
     util.copy(this.cfg.velo, rec.velo)
-
-    util.remove(this.tmp)
+    util.remove(this.cfg.velo)
 
     return file
   }
