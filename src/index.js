@@ -191,7 +191,7 @@ class TempusArchive {
     let thumbnail = await retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
-    if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
+    if (!single && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
     await retry(() => this.yt.updateVideo(vid, {
