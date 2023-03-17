@@ -162,6 +162,7 @@ class TempusArchive {
     if (chapters) desc += chapters
 
     let vid = await this.yt.uploadVideo(file, {
+      title: { newTitle: String(rec.id) },
       draftState: { isDraft: true }
     }, progress)
 
