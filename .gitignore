@@ -1,10 +1,12 @@
 **/node_modules
 /data/output
 /data/tmp
-/data/keys.json
+/data/keys*.json
 /data/*.list
 sound.cache
 STATE
 /data/report.json
 /data/demos
+
 !players.list
+!/data/keys_example.json
