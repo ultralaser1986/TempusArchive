@@ -348,6 +348,8 @@ class TempusArchive {
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
+          if (item.privacy === 'VIDEO_PRIVACY_PRIVATE') continue
+
           if (item.title[0] === '!') {
             status.skips.push(item.videoId)
             continue
