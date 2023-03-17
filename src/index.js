@@ -148,7 +148,7 @@ class TempusArchive {
       `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
       override ? `Previous Record: https://youtu.be/${override}` : '',
       '',
-      tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
+      (tier !== null && tier !== undefined) ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
       `Map: https://tempus.xyz/maps/${rec.map}`,
       `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
