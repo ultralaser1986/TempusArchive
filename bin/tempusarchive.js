@@ -49,7 +49,6 @@ program
   .option('-k, --keep', 'don\'t delete output files', false)
   .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
-  .option('-a, --no-launch', 'don\'t launch game', false)
   .action((ids, opts) => run(ids, opts))
 
 program
@@ -254,7 +253,7 @@ async function run (ids, opts) {
   else if (opts.unlisted) status = 'UNLISTED'
   console.log(MEDAL, `Upload Mode: ${status}`)
 
-  if (opts.launch) await ta.launch()
+  // await ta.launch()
 
   for (let i = start; i < ids.length; i++) {
     if (time && Number(opts.ntime) && time > opts.ntime) {
@@ -298,6 +297,7 @@ async function run (ids, opts) {
       console.log(MEDAL, `Using existing file: "${rec.file}"`)
     } else {
       try {
+        if (!ta.tr.app) await ta.launch()
         rec.file = await ta.record(rec, 'default', 'default')
       } catch (e) {
         console.log('\n')
