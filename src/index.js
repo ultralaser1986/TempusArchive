@@ -197,7 +197,13 @@ class TempusArchive {
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
     await retry(() => this.yt.updateVideo(vid, {
       draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
-      privacyState: { newPrivacy: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC') },
+      privacyState: { newPrivacy: single ? 'UNLISTED' : 'PRIVATE' },
+      scheduledPublishing: {
+        set: {
+          privacy: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
+          timeSec: parseInt((Date.now() + this.cfg.publish_wait) / 1000).toString()
+        }
+      },
       title: { newTitle: (single ? '! ' : '') + rec.display },
       description: { newDescription: desc },
       category: { newCategoryId: this.cfg.meta.category },
@@ -349,6 +355,9 @@ class TempusArchive {
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
+          let scheduled = item.scheduledPublishingDetails?.scheduledPublishings[0].action
+          if (scheduled) item.privacy = 'VIDEO_PRIVACY_' + scheduled.split('_').pop()
+
           if (item.privacy === 'VIDEO_PRIVACY_PRIVATE') continue
 
           if (item.title[0] === '!') {
