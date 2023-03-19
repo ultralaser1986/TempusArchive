@@ -195,12 +195,13 @@ class TempusArchive {
     if (!single && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
+    let unlisted = single || this.cfg.unlisted.includes(rec.z.type)
     await retry(() => this.yt.updateVideo(vid, {
       draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
-      privacyState: { newPrivacy: single ? 'UNLISTED' : 'PRIVATE' },
+      privacyState: { newPrivacy: unlisted ? 'UNLISTED' : 'PRIVATE' },
       scheduledPublishing: {
         set: {
-          privacy: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
+          privacy: unlisted ? 'UNLISTED' : 'PUBLIC',
           timeSec: parseInt((Date.now() + this.cfg.publish_wait) / 1000).toString()
         }
       },
