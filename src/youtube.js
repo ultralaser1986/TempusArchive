@@ -221,7 +221,8 @@ YouTube.prototype.listVideos = async function (vids, next) {
         title: true,
         description: true,
         privacy: true,
-        timeCreatedSeconds: true
+        timeCreatedSeconds: true,
+        thumbnailEditorState: { all: true }
       },
       videoIds: vids,
       pageToken: next,

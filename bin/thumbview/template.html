@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 20px;
+            background-color: #2a2725;
+            color: #ece3cb;
+        }
+
+        #thumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: center;
+        }
+
+        .item {
+            overflow: hidden;
+            height: 66px;
+        }
+
+        .item>img {
+            height: 78px;
+            position: relative;
+            top: -12px;
+        }
+
+        .item:hover {
+            cursor: pointer;
+        }
+
+        .check {
+            outline: 2px solid red;
+        }
+
+        .check>img {
+            opacity: 0.2;
+        }
+
+        #list {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: black;
+            padding: 20px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="thumbs"></div>
+    <div id="list"></div>
+    <!--%THUMBS%-->
+    <script>
+        let thumbs = document.getElementById('thumbs')
+        let list = document.getElementById('list')
+
+        for (let key in window.thumbnails) {
+            thumbs.insertAdjacentHTML('beforeEnd', `<div class="item" data-videoId="${key}" onclick="toggle(this)"><img loading="lazy" src="${window.thumbnails[key]}"></div>`)
+        }
+
+        function toggle(element) {
+            element.classList.toggle('check')
+
+            let v = Array.from(document.getElementsByClassName('check')).map(x => x.getAttribute('data-videoId')).join(" ")
+            list.innerText = v
+            console.log(v)
+        }
+    </script>
+</body>
+
+</html>
