@@ -7,6 +7,7 @@ sound.cache
 STATE
 /data/report.json
 /data/demos
+/bin/thumbview/thumbview.html
 
 !players.list
 !/data/keys_example.json
