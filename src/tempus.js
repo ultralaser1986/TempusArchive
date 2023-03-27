@@ -1,7 +1,7 @@
 let dp = require('despair')
 let util = require('./util')
 
-let base = 'https://tempus.xyz/api'
+let base = 'https://tempus2.xyz/api/v0'
 
 module.exports = {
   async getActivity () {
