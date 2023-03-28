@@ -145,16 +145,16 @@ class TempusArchive {
     if (rec.z.type !== 'trick') tier = rec.tier
 
     let desc = [
-      `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
+      `https://tempus2.xyz/records/${rec.id}/${rec.zone}`,
       override ? `Previous Record: https://youtu.be/${override}` : '',
       '',
       (tier !== null && tier !== undefined) ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
-      `Map: https://tempus.xyz/maps/${rec.map}`,
-      `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
+      `Map: https://tempus2.xyz/maps/${rec.map}`,
+      `Demo: https://tempus2.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
       `Date: ${new Date(rec.date * 1000).toUTCString()}`,
       '',
-      'Play On Tempus Here: https://tempus.xyz',
+      'Play On Tempus Here: https://tempus2.xyz',
       'Tempus Network Discord: https://discord.gg/5c7eSKUMkf'
     ].filter(x => x !== null).join('\n')
 
