@@ -397,11 +397,15 @@ class TempusArchive {
         for (let i = 0; i < ups.length; i++) {
           let vid = ups[i]
           if (!info[vid]) console.log({ vid })
-          let { privacy, description } = info[vid]
+          let { title, privacy, description } = info[vid]
 
           // verify privacy status
-          if (i === ups.length - 1) {
-            if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
+          if (['Bonus', 'Trick', 'Course'].some(x => title.indexOf(` ${x} `) !== -1)) {
+            if (i === ups.length - 1) {
+              if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
+            } else {
+              if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
+            }
           } else {
             if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
           }
