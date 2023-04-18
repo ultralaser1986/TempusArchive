@@ -37,6 +37,15 @@ KILLERS.forEach(killer => process.on(killer, e => {
   if (killer !== 'exit') process.exit()
 }))
 
+let re = {
+  fail: x => {
+    return async (i, r, t) => {
+      await ta.yt.updateSession()
+      if (ta.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+    }
+  }
+}
+
 program
   .command('run')
   .description('start rendering')
@@ -150,11 +159,11 @@ program
       let vid = item.videoId
       let title = item.title.replace(/^((!|\?) )?/, '? ')
 
-      await ta.yt.updateVideo(vid, {
+      await util.retry(() => ta.yt.updateVideo(vid, {
         privacyState: { newPrivacy: 'UNLISTED' },
         addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
         title: { newTitle: title }
-      })
+      }), re.fail('wiping video'), e => { throw e })
 
       for (let zone in ta.uploads) {
         for (let id in ta.uploads[zone]) {
@@ -207,11 +216,13 @@ program
     for (let item of res.items) {
       let vid = item.videoId
 
-      await ta.yt.updateVideo(vid, {
-        addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) }
-      })
+      await util.retry(async () => {
+        await ta.yt.updateVideo(vid, {
+          addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) }
+        })
 
-      await ta.yt.deleteVideo(vid)
+        await ta.yt.deleteVideo(vid)
+      }, re.fail('deleting video'), e => { throw e })
 
       for (let zone in ta.uploads) {
         for (let id in ta.uploads[zone]) {
