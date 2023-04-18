@@ -176,7 +176,7 @@ class TempusArchive {
       del: async e => {
         if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
 
-        await retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
+        await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
         throw e
       }
     }
@@ -189,14 +189,14 @@ class TempusArchive {
         console.log(`\n[DEBUGLOG] Reusing thumbnail: "${rec.thumb}"`)
       } else console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
     }
-    let thumbnail = await retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
+    let thumbnail = await util.retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
 
     let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
     if (!single && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
     let unlisted = single || this.cfg.unlisted.includes(rec.z.type)
-    await retry(() => this.yt.updateVideo(vid, {
+    await util.retry(() => this.yt.updateVideo(vid, {
       draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
       privacyState: { newPrivacy: unlisted ? 'UNLISTED' : 'PRIVATE' },
       scheduledPublishing: {
@@ -216,7 +216,7 @@ class TempusArchive {
 
     if (override) {
       if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
-      await retry(() => this.yt.updateVideo(override, {
+      await util.retry(() => this.yt.updateVideo(override, {
         privacyState: { newPrivacy: 'UNLISTED' },
         addToPlaylist: { deleteFromPlaylistIds: [pl] }
       }), re.fail(`updating metadata of old record (${override})`), re.del)
@@ -228,7 +228,7 @@ class TempusArchive {
       // captions over 3h40min~ turned completely off
       if (rec.time <= this.cfg.caption_limit_max) {
         if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding captions...')
-        await retry(async () => {
+        await util.retry(async () => {
           await this.yt.addCaptions(vid, [
             this.#captions(rec.velo, rec, 0, 'Run Timer'),
             this.#captions(rec.velo, rec, 1, 'Speedo (Horizontal)'),
@@ -660,17 +660,3 @@ class TempusArchive {
 }
 
 module.exports = TempusArchive
-
-async function retry (fn, fail, error) {
-  let retries = 5
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn()
-    } catch (e) {
-      if (i === retries) return error ? error(e) : false
-      let time = (i + 1) * 10 * 1000
-      if (fail) await fail(i, retries, time)
-      await new Promise(resolve => setTimeout(resolve, time))
-    }
-  }
-}

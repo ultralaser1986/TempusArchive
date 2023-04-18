@@ -159,5 +159,18 @@ module.exports = {
       rl.close()
       resolve(ans)
     }))
+  },
+  async retry (fn, fail, error) {
+    let retries = 5
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await fn()
+      } catch (e) {
+        if (i === retries) return error ? error(e) : false
+        let time = (i + 1) * 10 * 1000
+        if (fail) await fail(i, retries, time)
+        await new Promise(resolve => setTimeout(resolve, time))
+      }
+    }
   }
 }
