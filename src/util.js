@@ -148,5 +148,16 @@ module.exports = {
       if (typeof x[key] === 'object' && Object.keys(x[key]).length === 0 && !(x[key] instanceof Date)) delete x[key]
     })
     return x
+  },
+  async question (msg) {
+    let rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    })
+
+    return new Promise(resolve => rl.question(msg, ans => {
+      rl.close()
+      resolve(ans)
+    }))
   }
 }

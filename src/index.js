@@ -350,7 +350,7 @@ class TempusArchive {
       let total = 0
 
       let loopVids = async next => {
-        let res = await this.yt.listVideos(null, next)
+        let res = await this.yt.listVideos(null, null, next)
 
         total += res.items.length
         util.log(`[Uploads] Fetching videos... ${total}`)

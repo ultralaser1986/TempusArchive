@@ -32,6 +32,7 @@
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
     "state": "STATE",
+    "bulk": "data/bulk.json",
     "report": "data/report.json",
     "playlist": {
         "map": "PLA_TcYVYdyj_izt-_fLe8lBfE-ZPrSAT-",

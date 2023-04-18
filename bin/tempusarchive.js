@@ -74,7 +74,7 @@ program
   .option('-f, --full', 'delete output folder as well')
   .action(opts => {
     ta.tr.init()
-    util.remove([ta.cfg.state, ta.cfg.report])
+    util.remove([ta.cfg.state, ta.cfg.bulk, ta.cfg.report])
     if (opts.full) {
       util.remove(ta.cfg.output)
       util.mkdir(ta.cfg.output)
@@ -131,61 +131,81 @@ program
 program
   .command('wipe')
   .description('unlist a youtube video and mark it as wiped')
-  .argument('<video id>', 'youtube video id to wipe')
-  .action(async (vid) => {
+  .argument('<video ids...>', 'youtube video ids')
+  .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
+
+    let ans = await util.question(`Are you sure you want to [wipe] ${ids.length} videos? y/n `)
+    if (ans !== 'y') return
+
     ta.tr.init()
     await ta.yt.updateSession()
 
-    let res = await ta.yt.listVideos([vid])
-    let title = res.items[0].title
+    let res = await ta.yt.listVideos(ids)
 
-    title = title.replace(/^((!|\?) )?/, '? ')
+    for (let item of res.items) {
+      let vid = item.videoId
+      let title = item.title.replace(/^((!|\?) )?/, '? ')
 
-    await ta.yt.updateVideo(vid, {
-      privacyState: { newPrivacy: 'UNLISTED' },
-      addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
-      title: { newTitle: title }
-    })
+      await ta.yt.updateVideo(vid, {
+        privacyState: { newPrivacy: 'UNLISTED' },
+        addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
+        title: { newTitle: title }
+      })
 
-    for (let zone in ta.uploads) {
-      for (let id in ta.uploads[zone]) {
-        if (vid === ta.uploads[zone][id]) {
-          delete ta.uploads[zone][id]
-          if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
-          ta.uploads.export()
-          break
+      for (let zone in ta.uploads) {
+        for (let id in ta.uploads[zone]) {
+          if (vid === ta.uploads[zone][id]) {
+            delete ta.uploads[zone][id]
+            if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
+            ta.uploads.export()
+            break
+          }
         }
       }
-    }
 
-    console.log(`Wiped: ${title} (${vid})`)
+      console.log(`Wiped: ${title} (${vid})`)
+    }
   })
 
 program
   .command('info')
   .description('view info about a youtube video')
-  .argument('<video id>', 'youtube video id')
-  .action(async (vid) => {
-    ta.tr.init()
-    await ta.yt.updateSession()
+  .argument('<video ids...>', 'youtube video ids')
+  .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
 
-    let res = await ta.yt.listVideos([vid])
-    let title = res.items[0].title
+    let res = await ta.yt.listVideos(ids)
 
-    console.log(`${title} (${vid})`)
+    for (let item of res.items) console.log(`${item.title} (${item.videoId})`)
   })
 
 program
   .command('delete')
   .description('delete youtube videos')
-  .argument('<video ids...>', 'youtube video ids to delete')
+  .argument('<video ids...>', 'youtube video ids')
   .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
+
+    let ans = await util.question(`Are you sure you want to [delete] ${ids.length} videos? y/n `)
+    if (ans !== 'y') return
+
     ta.tr.init()
     await ta.yt.updateSession()
 
-    for (let vid of ids) {
-      let res = await ta.yt.listVideos([vid])
-      let title = res.items[0].title
+    let res = await ta.yt.listVideos(ids)
+
+    for (let item of res.items) {
+      let vid = item.videoId
 
       await ta.yt.updateVideo(vid, {
         addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) }
@@ -204,8 +224,41 @@ program
         }
       }
 
-      console.log(`Deleted: ${title} (${vid})`)
+      console.log(`Deleted: ${item.title} (${vid})`)
     }
+  })
+
+program
+  .command('bulk')
+  .description('search for multiple videos and save to file')
+  .argument('<value>', 'value to match in title or desc')
+  .action(async (value) => {
+    ta.tr.init()
+    await ta.yt.updateSession()
+
+    let filter = {
+      or: {
+        operands: [
+          { descriptionPrefixed: { value } },
+          { titlePrefixed: { value } }
+        ]
+      }
+    }
+
+    let items = []
+
+    let loopVids = async next => {
+      let res = await ta.yt.listVideos(null, filter, next)
+
+      items.push(...res.items.map(x => x.videoId))
+      util.log(`Fetching videos... ${items.length}`)
+
+      if (res.next) await loopVids(res.next)
+    }
+    await loopVids()
+
+    util.write(ta.cfg.bulk, JSON.stringify(items))
+    util.log(`Fetched ${items.length} videos. Saved in '${ta.cfg.bulk}'`)
   })
 
 program

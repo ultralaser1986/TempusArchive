@@ -202,7 +202,7 @@ YouTube.prototype.sendVideoBinary = async function (video, progress) {
   })
 }
 
-YouTube.prototype.listVideos = async function (vids, next) {
+YouTube.prototype.listVideos = async function (vids, filter, next) {
   if (!vids || !Array.isArray(vids)) vids = []
   let method = vids.length ? 'get' : 'list'
   let body = await dp.post(`https://studio.youtube.com/youtubei/v1/creator/${method}_creator_videos`, {
@@ -224,6 +224,7 @@ YouTube.prototype.listVideos = async function (vids, next) {
         timeCreatedSeconds: true,
         thumbnailEditorState: { all: true }
       },
+      filter,
       videoIds: vids,
       pageToken: next,
       context: this.context()

@@ -6,6 +6,7 @@
 sound.cache
 STATE
 /data/report.json
+/data/bulk.json
 /data/demos
 /bin/thumbview/thumbview.html
 
