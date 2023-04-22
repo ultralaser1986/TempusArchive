@@ -249,7 +249,7 @@ class TempusArchive {
     return vid
   }
 
-  async update (opts = { players: true, records: true, uploads: true }, full, tricks) {
+  async update (opts = { players: true, records: true, uploads: true }, full) {
     if (opts.players) {
       let num = 0
       let nicknames = await dp(this.cfg.nickdata).json()
@@ -268,8 +268,8 @@ class TempusArchive {
     }
 
     if (opts.records) {
-      if (full || tricks) {
-        let records = tricks ? this.records : new ListStore()
+      if (full) {
+        let records = new ListStore()
 
         let maps = await tempus.getMapList()
 
@@ -279,7 +279,6 @@ class TempusArchive {
           let map = maps[i]
           // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
           for (let zone of this.cfg.zones) {
-            if (tricks && zone !== 'trick') continue
             let zones = map.zone_counts[zone]
             for (let j = 0; j < zones; j++) {
               let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
@@ -302,8 +301,7 @@ class TempusArchive {
             }
           }
         }
-        if (tricks) util.log(`[Records] Fetched ${count} trick records!\n`)
-        else util.log(`[Records] Fetched ${count} records!\n`)
+        util.log(`[Records] Fetched ${count} records!\n`)
 
         records.export(this.cfg.records)
         this.records = records
@@ -312,7 +310,7 @@ class TempusArchive {
 
         let updated = 0
         let demoless = 0
-        let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs]
+        let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs, ...activity.trick_wrs]
         for (let i = 0; i < wrs.length; i++) {
           let rec = wrs[i]
           let tfclass = tempus.formatClass(rec.record_info.class)
@@ -333,7 +331,7 @@ class TempusArchive {
             updated++
           }
         }
-        util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo) <NO TRICK RECORDS>\n`)
+        util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo)\n`)
         if (updated + demoless === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
 
         this.records.export(this.cfg.records)
