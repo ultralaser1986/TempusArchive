@@ -65,7 +65,6 @@ program
   .description('update databases')
   .argument('[types...]', 'database types to update (players/records/uploads)')
   .option('-f, --full', 'full update')
-  .option('-t, --tricks', 'update tricks fully')
   .action((types, opts) => {
     if (!types.length) types = ['players', 'records', 'uploads']
 
@@ -74,7 +73,7 @@ program
       return obj
     }, {})
 
-    ta.update(types, opts.full, opts.tricks)
+    ta.update(types, opts.full)
   })
 
 program
