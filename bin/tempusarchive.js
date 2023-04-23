@@ -81,7 +81,6 @@ program
   .description('delete leftover temporary files')
   .option('-f, --full', 'delete output folder as well')
   .action(opts => {
-    ta.tr.init()
     util.remove([ta.cfg.state, ta.cfg.bulk, ta.cfg.report])
     if (opts.full) {
       util.remove(ta.cfg.output)
@@ -107,7 +106,6 @@ program
   .command('check')
   .description('check if keys.json is valid')
   .action(async () => {
-    ta.tr.init()
     console.log(await ta.yt.updateSession())
   })
 
@@ -149,7 +147,6 @@ program
     let ans = await util.question(`Are you sure you want to [wipe] ${ids.length} videos? y/n `)
     if (ans !== 'y') return
 
-    ta.tr.init()
     await ta.yt.updateSession()
 
     let res = await ta.yt.listVideos(ids)
@@ -208,7 +205,6 @@ program
     let ans = await util.question(`Are you sure you want to [delete] ${ids.length} videos? y/n `)
     if (ans !== 'y') return
 
-    ta.tr.init()
     await ta.yt.updateSession()
 
     let res = await ta.yt.listVideos(ids)
@@ -244,7 +240,6 @@ program
   .description('search for multiple videos and save to file')
   .argument('<value>', 'value to match in title or desc')
   .action(async (value) => {
-    ta.tr.init()
     await ta.yt.updateSession()
 
     let filter = {
