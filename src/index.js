@@ -218,6 +218,7 @@ class TempusArchive {
       if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
       await util.retry(() => this.yt.updateVideo(override, {
         privacyState: { newPrivacy: 'UNLISTED' },
+        scheduledPublishing: { remove: {} },
         addToPlaylist: { deleteFromPlaylistIds: [pl] }
       }), re.fail(`updating metadata of old record (${override})`), re.del)
     }

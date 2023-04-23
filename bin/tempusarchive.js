@@ -160,6 +160,7 @@ program
 
       await util.retry(() => ta.yt.updateVideo(vid, {
         privacyState: { newPrivacy: 'UNLISTED' },
+        scheduledPublishing: { remove: {} },
         addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) },
         title: { newTitle: title }
       }), re.fail('wiping video'), e => { throw e })
