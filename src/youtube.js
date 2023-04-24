@@ -93,7 +93,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
 
 YouTube.prototype.updateVideo = async function (vid, data) {
   try {
-    await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
+    let res = await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
       query: {
         alt: 'json',
         key: INNERTUBE_KEY
@@ -108,7 +108,8 @@ YouTube.prototype.updateVideo = async function (vid, data) {
         context: this.context(),
         ...data
       }
-    })
+    }).json()
+    if (res.overallResult.resultCode !== 'UPDATE_SUCCESS') throw Error('Failed to update')
   } catch (e) { throw JSON.parse(e.body).error }
 }
 
