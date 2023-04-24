@@ -131,12 +131,12 @@ program
       let title = item.title.replace(/^((!|\?) )?/, '? ')
 
       let pls = Object.values(ta.cfg.playlist)
-      pls = pls.splice(pls.indexOf('wiped'), 1)
+      pls = pls.splice(pls.indexOf(ta.cfg.playlist.wiped), 1)
 
       await util.retry(() => ta.yt.updateVideo(vid, {
         privacyState: { newPrivacy: 'UNLISTED' },
         scheduledPublishing: { remove: {} },
-        addToPlaylist: { deleteFromPlaylistIds: pls, addToPlaylistIds: ['wiped'] },
+        addToPlaylist: { deleteFromPlaylistIds: pls, addToPlaylistIds: [ta.cfg.playlist.wiped] },
         title: { newTitle: title }
       }), re.fail('wiping video'), e => { throw e })
 
