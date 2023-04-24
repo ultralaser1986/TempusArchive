@@ -110,31 +110,6 @@ program
   })
 
 program
-  .command('genpls')
-  .description('generate playlists')
-  .action(async () => {
-    // clean playlist before running to avoid order issues
-
-    let list = Object.values(ta.uploads).reverse()
-
-    for (let i = 0; i < list.length; i++) {
-      let [id, vid] = Object.entries(list[i])[0]
-      let rec = await ta.fetch(id).catch(e => null)
-      if (!rec) {
-        console.log(`Not found: ${id} ${vid}`)
-        continue
-      }
-      let pl = ta.cfg.playlist[rec.z.type]
-
-      await ta.yt.updateVideo(vid, {
-        addToPlaylist: { addToPlaylistIds: [pl] }
-      })
-
-      console.log(`${i + 1}/${list.length} ${vid} > ${pl} (${rec.z.type})`)
-    }
-  })
-
-program
   .command('wipe')
   .description('unlist a youtube video and mark it as wiped')
   .argument('<video ids...>', 'youtube video ids')
