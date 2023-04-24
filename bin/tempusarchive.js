@@ -243,6 +243,58 @@ program
   })
 
 program
+  .command('reportfix')
+  .description('fix issues in the report.json file')
+  .action(async () => {
+    if (!util.exists(ta.cfg.report)) return util.log('No report.json found!')
+    let report = JSON.parse(util.read(ta.cfg.report, 'utf-8'))
+
+    // fix privacy
+    for (let privacy in report.privacy) {
+      let items = report.privacy[privacy]
+      for (let i = 0; i < items.length; i++) {
+        util.log(`[reportfix] Set privacy to ${privacy} - ${i + 1}/${items.length} (${items[i]})`)
+
+        await util.retry(() => ta.yt.updateVideo(items[i], {
+          privacyState: { newPrivacy: privacy.toUpperCase() },
+          scheduledPublishing: { remove: {} }
+        }), re.fail('updating privacy'), e => { throw e })
+      }
+      util.log(`[reportfix] Changed ${items.length} videos to ${privacy}!\n`)
+    }
+
+    // fix desc chains
+    let items = Object.keys(report.update)
+    if (items.length) {
+      let res = await ta.yt.listVideos(items)
+      for (let i = 0; i < res.items.length; i++) {
+        let item = res.items[i]
+        let rep = report.update[item.videoId]
+
+        util.log(`[reportfix] Updating desc chain ${i + 1}/${res.items.length} (${item.videoId})`)
+
+        let desc = item.description
+
+        if (rep === '') {
+          desc = desc.replace(/.*https:\/\/youtu\.be\/.*/, '')
+        } else {
+          desc = desc.replace(/(https:\/\/youtu\.be\/).*/, `$1${rep}`)
+          if (desc === item.description) {
+            desc = desc.replace(/(?<=\n)/, `Previous Record: https://youtu.be/${rep}`)
+          }
+        }
+
+        await util.retry(() => ta.yt.updateVideo(item.videoId, {
+          description: { newDescription: desc }
+        }), re.fail('updating desc chain'), e => { throw e })
+      }
+      util.log(`[reportfix] Updated ${res.items.length} desc chains!\n`)
+    }
+
+    util.remove(ta.cfg.report)
+  })
+
+program
   .name('tempusarchive')
   .parse()
 
