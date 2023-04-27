@@ -109,7 +109,10 @@ YouTube.prototype.updateVideo = async function (vid, data) {
         ...data
       }
     }).json()
-    if (res.overallResult.resultCode !== 'UPDATE_SUCCESS') throw Error('Failed to update')
+    if (res.overallResult.resultCode !== 'UPDATE_SUCCESS') {
+      console.error(res)
+      throw Error('Failed to update')
+    }
   } catch (e) { throw JSON.parse(e.body).error }
 }
 
