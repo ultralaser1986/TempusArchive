@@ -391,7 +391,7 @@ async function run (ids, opts) {
       } catch (e) {
         console.log('\n')
         console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
-        throw Error(e)
+        throw e
       }
 
       if (rec.file === null) {
@@ -428,7 +428,7 @@ async function run (ids, opts) {
           return
         } else {
           console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
-          throw Error(e)
+          throw e
         }
       }
     } else console.log(MEDAL_CLOSE, `Output: "${rec.file}"`)
