@@ -622,7 +622,15 @@ class TempusArchive {
 
   async #thumb (file, seconds, path) {
     if (!util.exists(path)) await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -y "${path}"`)
-    return 'data:image/png;base64,' + util.read(path, 'base64')
+    let thumb = 'data:image/png;base64,' + util.read(path, 'base64')
+    if (thumb.length > 2000000) { // use jpg if thumbnail is bigger than 2MB
+      console.log('GET IN')
+      let jpg = path.replace('.png', '.jpg')
+      thumb = await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -q:v 1 -qmin 1 -y "${jpg}"`)
+      thumb = 'data:image/jpeg;base64,' + util.read(jpg, 'base64')
+      util.remove(jpg)
+    }
+    return thumb
   }
 
   #merge (source, target) {
