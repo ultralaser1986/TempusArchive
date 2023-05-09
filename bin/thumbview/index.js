@@ -9,7 +9,8 @@ let util = require('../../src/util')
 let TempusArchive = require('../../src')
 let ta = new TempusArchive('../data/config.json')
 
-async function main () {
+async function main (max) {
+  max = (max && !isNaN(max)) ? Number(max) : 0
   let total = 0
   let thumbs = {}
 
@@ -23,6 +24,7 @@ async function main () {
       thumbs[item.videoId] = item.thumbnailEditorState.stills.at(-1).thumbnails[0].url
     }
 
+    if (max && total >= max) return
     if (res.next) await loopVids(res.next)
   }
   await loopVids()
@@ -38,4 +40,4 @@ async function main () {
   child.exec(`explorer.exe "${out}"`)
 }
 
-main()
+main(process.argv[2])
