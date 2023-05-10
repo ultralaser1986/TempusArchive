@@ -65,6 +65,7 @@ program
   .description('update databases')
   .argument('[types...]', 'database types to update (players/records/uploads)')
   .option('-f, --full', 'full update')
+  .option('-v, --verbose', 'display wiped and skipped video ids')
   .action((types, opts) => {
     if (!types.length) types = ['players', 'records', 'uploads']
 
@@ -73,7 +74,7 @@ program
       return obj
     }, {})
 
-    ta.update(types, opts.full)
+    ta.update(types, opts.full, opts.verbose)
   })
 
 program
