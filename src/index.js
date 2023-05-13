@@ -7,6 +7,8 @@ let TemRec = require('temrec')
 let ListStore = require('./liststore')
 ListStore.setValueSwaps([undefined, true], ['X', false])
 
+let REQUIRED_RECORD_PROPS = ['id', 'key', 'date', 'class', 'tier', 'zone', 'map', 'demo', 'start', 'end', 'time', 'player', 'nick', 'z', 'z.demo', 'z.type', 'z.index', 'z.custom', 'display', 'diff']
+
 class TempusArchive {
   constructor (config) {
     this.cfg = require(config)
@@ -40,21 +42,44 @@ class TempusArchive {
     return pending
   }
 
-  async fetch (id) {
-    let rec = await TemRec.fetch(id)
-    rec.end = rec.start + (rec.time * (200 / 3))
-    rec.key = `${rec.class}_${rec.zone}`
-    rec.diff = await tempus.getDiffFromRecord(rec)
+  async fetch (id, minimal = false) {
+    id = id.toString()
+    let rec = null
 
-    if (rec.rank === 1 && rec.z.type === 'map') {
-      let wrs = await tempus.getMapWRS(rec.map)
-      rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
+    if (id.endsWith('.json')) {
+      rec = JSON.parse(util.read(id))
+    } else {
+      rec = await TemRec.fetch(id)
+      if (!minimal) {
+        rec.diff = await tempus.getDiffFromRecord(rec)
+
+        if (rec.rank === 1 && rec.z.type === 'map') {
+          let wrs = await tempus.getMapWRS(rec.map)
+          rec.splits = Object.values(wrs).find(x => x && x.wr.id === rec.id)?.wr?.splits
+          if (rec.splits) rec.splits = rec.splits.filter(x => x.duration !== null)
+          if (!rec.splits?.length) rec.splits = null
+        }
+      }
     }
+
+    rec.end = Math.floor(rec.start + (rec.time * (200 / 3)))
+    rec.key = `${rec.class}_${rec.zone}`
 
     let nick = this.players[rec.player]
     if (nick) nick = Object.keys(nick)[0]
 
     rec.display = tempus.formatDisplay(rec, nick)
+
+    if (!minimal) {
+      for (let props of REQUIRED_RECORD_PROPS) {
+        let [prop, next] = props.split('.')
+        if (Object.hasOwn(rec, prop)) {
+          if (!next || Object.hasOwn(rec[prop], next)) continue
+        }
+        throw Error(`Record has missing property: ${props}`)
+      }
+    }
+
     return rec
   }
 
@@ -83,7 +108,8 @@ class TempusArchive {
       pre: this.cfg.pre,
       timed: true,
       cubemaps: false,
-      vis: true,
+      vis: false,
+      reload: true,
       ffmpeg: {
         '!sfx': end.sfx,
         subs: end.subs,
@@ -101,14 +127,13 @@ class TempusArchive {
 
     let file = await this.tr.record(rec, opts)
 
-    util.remove(this.tmp)
+    util.copy(this.cfg.velo, rec.velo)
+    util.remove(this.cfg.velo)
 
     return file
   }
 
   async upload (rec, file, progress, single = false) {
-    util.mkdir(this.tmp)
-
     await this.yt.updateSession()
 
     let override = this.uploads[rec.key]
@@ -120,63 +145,115 @@ class TempusArchive {
     if (rec.z.type !== 'trick') tier = rec.tier
 
     let desc = [
-      `https://tempus.xyz/records/${rec.id}/${rec.zone}`,
+      `https://tempus2.xyz/records/${rec.id}/${rec.zone}`,
       override ? `Previous Record: https://youtu.be/${override}` : '',
       '',
-      tier ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
-      `Demo: https://tempus.xyz/demos/${rec.z.demo}`,
+      (tier !== null && tier !== undefined) ? `Tier: ${tier} (${tempus.formatTier(tier)})` : null,
+      `Map: https://tempus2.xyz/maps/${rec.map}`,
+      `Demo: https://tempus2.xyz/demos/${rec.z.demo}`,
       `Player: https://steamcommunity.com/profiles/${util.formatSteamProfile(rec.player)}`,
-      `Date: ${new Date(rec.date * 1000).toUTCString()}`
+      `Date: ${new Date(rec.date * 1000).toUTCString()}`,
+      '',
+      'Play On Tempus Here: https://tempus2.xyz',
+      'Tempus Network Discord: https://discord.gg/5c7eSKUMkf'
     ].filter(x => x !== null).join('\n')
 
     let chapters = await this.#chapters(rec)
     if (chapters) desc += chapters
 
     let vid = await this.yt.uploadVideo(file, {
-      title: (single ? '! ' : '') + rec.display,
-      description: desc,
-      visibility: single ? 'UNLISTED' : (this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'),
-      category: this.cfg.meta.category,
-      tags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
+      title: String(rec.id),
+      draftState: { isDraft: true }
     }, progress)
+
+    let re = {
+      fail: x => {
+        return async (i, r, t) => {
+          await this.yt.updateSession()
+          if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+        }
+      },
+      del: async e => {
+        if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+
+        await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
+        throw e
+      }
+    }
 
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
-    let thumbnail = await this.#thumb(file, time)
 
-    await this.yt.updateVideo(vid, {
+    if (this.cfg.DEBUG) {
+      if (util.exists(rec.thumb)) {
+        console.log(`\n[DEBUGLOG] Reusing thumbnail: "${rec.thumb}"`)
+      } else console.log(`\n[DEBUGLOG] Making thumbnail at ${time.toFixed(2)}s...`)
+    }
+    let thumbnail = await util.retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
+
+    let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
+    if (!single && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
+
+    if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
+    let unlisted = single || this.cfg.unlisted.includes(rec.z.type)
+
+    await util.retry(() => this.yt.updateVideo(vid, {
+      draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
+      privacyState: { newPrivacy: unlisted ? 'UNLISTED' : 'PRIVATE' },
+      scheduledPublishing: unlisted
+        ? {}
+        : {
+            set: {
+              privacy: 'PUBLIC',
+              timeSec: parseInt((Date.now() + this.cfg.publish_wait) / 1000).toString()
+            }
+          },
+      title: { newTitle: (single ? '! ' : '') + rec.display },
+      description: { newDescription: desc },
+      category: { newCategoryId: this.cfg.meta.category },
+      tags: { newTags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index] },
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
-      gameTitle: { newKgEntityId: this.cfg.meta.game }
-    })
+      gameTitle: { newKgEntityId: this.cfg.meta.game },
+      addToPlaylist: { addToPlaylistIds: [pl] }
+    }), re.fail('updating metadata'), re.del)
 
-    if (override) await this.yt.updateVideo(override, { privacyState: { newPrivacy: 'UNLISTED' } })
-
-    if (!single) {
-      this.uploads.add(rec.key, rec.id, vid)
-      this.uploads.export(this.cfg.uploads)
+    if (override) {
+      if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
+      await util.retry(() => this.yt.updateVideo(override, {
+        privacyState: { newPrivacy: 'UNLISTED' },
+        scheduledPublishing: { remove: {} },
+        addToPlaylist: { deleteFromPlaylistIds: [pl] }
+      }), re.fail(`updating metadata of old record (${override})`), re.del)
     }
 
-    if (util.exists(this.cfg.velo)) {
+    if (util.exists(rec.velo)) {
       // captions over 13min~ wont have styling
       // captions over 1h50min~ break, so we half their fps
       // captions over 3h40min~ turned completely off
       if (rec.time <= this.cfg.caption_limit_max) {
-        await this.yt.addCaptions(vid, [
-          this.#captions(this.cfg.velo, rec, 0, 'Run Timer'),
-          this.#captions(this.cfg.velo, rec, 1, 'Speedo (Horizontal)'),
-          this.#captions(this.cfg.velo, rec, 2, 'Speedo (Vertical)'),
-          this.#captions(this.cfg.velo, rec, 3, 'Speedo (Absolute)'),
-          this.#captions(this.cfg.velo, rec, 4, 'Tick of Demo')
-        ])
+        if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding captions...')
+        await util.retry(async () => {
+          await this.yt.addCaptions(vid, [
+            this.#captions(rec.velo, rec, 0, 'Run Timer'),
+            this.#captions(rec.velo, rec, 1, 'Speedo (Horizontal)'),
+            this.#captions(rec.velo, rec, 2, 'Speedo (Vertical)'),
+            this.#captions(rec.velo, rec, 3, 'Speedo (Absolute)'),
+            this.#captions(rec.velo, rec, 4, 'Tick of Demo')
+          ])
+        }, re.fail('adding captions'), re.del)
       }
     }
 
-    util.remove([this.tmp, this.cfg.velo])
+    if (!single) {
+      if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding upload to database...')
+      this.uploads.add(rec.key, rec.id, vid)
+      this.uploads.export(this.cfg.uploads)
+    }
 
     return vid
   }
 
-  async update (opts = { players: true, records: true, uploads: true }) {
+  async update (opts = { players: true, records: true, uploads: true }, full, verbose) {
     if (opts.players) {
       let num = 0
       let nicknames = await dp(this.cfg.nickdata).json()
@@ -195,35 +272,79 @@ class TempusArchive {
     }
 
     if (opts.records) {
-      let records = new ListStore()
+      if (full) {
+        let records = new ListStore()
 
-      let maps = await tempus.getMapList()
+        let maps = await tempus.getMapList()
 
-      for (let i = 0; i < maps.length; i++) {
-        let map = maps[i]
-        // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
-        for (let zone of this.cfg.zones) {
-          let count = map.zone_counts[zone]
-          for (let j = 0; j < count; j++) {
-            let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
-            let s = rec.results.soldier[0]
-            let d = rec.results.demoman[0]
-            if (s) records.add(`S_${rec.zone_info.id}`, s.id, !!s.demo_info?.url)
-            if (d) records.add(`D_${rec.zone_info.id}`, d.id, !!d.demo_info?.url)
+        let count = 0
 
-            util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${count})`)
+        for (let i = 0; i < maps.length; i++) {
+          let map = maps[i]
+          // if ((Date.now() - map.map_info.date_added * 1000) < this.cfg.new_map_wait) continue // skip new maps
+          for (let zone of this.cfg.zones) {
+            let zones = map.zone_counts[zone]
+            for (let j = 0; j < zones; j++) {
+              let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
+              let s = rec.results.soldier[0]
+              let d = rec.results.demoman[0]
+              if (s) {
+                let z = `S_${rec.zone_info.id}`
+                delete records[z]
+                records.add(z, s.id, !!s.demo_info?.url)
+                count++
+              }
+              if (d) {
+                let z = `D_${rec.zone_info.id}`
+                delete records[z]
+                records.add(z, d.id, !!d.demo_info?.url)
+                count++
+              }
+
+              util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${zones})`)
+            }
           }
         }
-      }
-      util.log(`[Records] Fetched ${Object.keys(records).length} records!\n`)
+        util.log(`[Records] Fetched ${count} records!\n`)
 
-      records.export(this.cfg.records)
-      this.records = records
+        records.export(this.cfg.records)
+        this.records = records
+      } else {
+        let activity = await tempus.getActivity()
+
+        let updated = 0
+        let demoless = 0
+        let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs, ...activity.trick_wrs]
+        for (let i = 0; i < wrs.length; i++) {
+          let rec = wrs[i]
+          let tfclass = tempus.formatClass(rec.record_info.class)
+          let id = rec.record_info.id
+          let key = `${tfclass}_${rec.zone_info.id}`
+
+          if (!this.records[key] || !this.records[key][id]) { // only update if record is missing / has no demo
+            util.log(`[Records] ${i + 1}/${wrs.length} - ${rec.map_info.name} [${rec.zone_info.type} ${rec.zone_info.zoneindex}]`)
+            let r = await this.fetch(id, true).catch(() => null)
+            if (!r) {
+              demoless++
+              continue
+            }
+
+            delete this.records[key]
+            this.records.add(key, id, !!r.demo)
+
+            updated++
+          }
+        }
+        util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo)\n`)
+        if (updated + demoless === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
+
+        this.records.export(this.cfg.records)
+      }
     }
 
     if (opts.uploads) {
       let uploads = new ListStore()
-      let status = { skips: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
+      let status = { skips: [], wipes: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
       let info = {}
 
       util.log('[Uploads] Fetching videos...')
@@ -231,14 +352,24 @@ class TempusArchive {
       let total = 0
 
       let loopVids = async next => {
-        let res = await this.yt.listVideos(next)
+        let res = await this.yt.listVideos(null, null, next)
 
         total += res.items.length
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
+          let scheduled = item.scheduledPublishingDetails?.scheduledPublishings[0].action
+          if (scheduled) item.privacy = 'VIDEO_PRIVACY_' + scheduled.split('_').pop()
+
+          if (item.privacy === 'VIDEO_PRIVACY_PRIVATE') continue
+
           if (item.title[0] === '!') {
             status.skips.push(item.videoId)
+            continue
+          }
+
+          if (item.title[0] === '?') {
+            status.wipes.push(item.videoId)
             continue
           }
 
@@ -268,11 +399,15 @@ class TempusArchive {
         for (let i = 0; i < ups.length; i++) {
           let vid = ups[i]
           if (!info[vid]) console.log({ vid })
-          let { privacy, description } = info[vid]
+          let { title, privacy, description } = info[vid]
 
           // verify privacy status
-          if (i === ups.length - 1) {
-            if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
+          if (['Bonus', 'Trick', 'Course'].some(x => title.indexOf(` ${x} `) !== -1)) {
+            if (i === ups.length - 1) {
+              if (privacy !== 'VIDEO_PRIVACY_PUBLIC') status.privacy.public.push(vid)
+            } else {
+              if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
+            }
           } else {
             if (privacy !== 'VIDEO_PRIVACY_UNLISTED') status.privacy.unlisted.push(vid)
           }
@@ -282,6 +417,8 @@ class TempusArchive {
             let pwr = ups[i - 1]
             let match = description.match('https://youtu.be/' + pwr)
             if (!match) status.update[vid] = pwr
+          } else if (ups.length === 1) {
+            if (description.match('https://youtu.be/')) status.update[vid] = ''
           }
         }
       }
@@ -292,9 +429,12 @@ class TempusArchive {
       if (status.dupes) console.log('Delete Duplicate Videos:', status.dupes)
       if (status.privacy) console.log('Change Video Privacy:', status.privacy)
       if (status.update) console.log('Change Description Chain Id:', status.update)
-      if (status.skips) console.log('Skipped records:', status.skips)
+      if (verbose) {
+        if (status.skips) console.log('Skipped Records:', status.skips)
+        if (status.wipes) console.log('Wiped Records:', status.wipes)
+      }
 
-      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0})\n`)
+      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)
 
       if (Object.keys(status).length) util.write(this.cfg.report, JSON.stringify(status, null, 2))
 
@@ -312,13 +452,16 @@ class TempusArchive {
     let t = x => new Date(x * 1000).toISOString().slice(11, -2)
 
     let primary = util.formatTime(time * 1000)
-    let secondary = util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) || ''
-    if (secondary && diff >= 0) secondary = '+' + secondary
+    let secondary = diff !== null ? util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) : ''
+    if (secondary) {
+      if (diff > 0) secondary = '+' + secondary
+      else if (secondary[0] !== '-') secondary = '-' + secondary
+    } else {
+      subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
+    }
 
     let [pri, mary] = primary.split('.')
     let [secon, dary] = secondary.split('.')
-
-    if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
 
     subs = subs
       .replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
@@ -346,7 +489,8 @@ class TempusArchive {
 
     let points = []
 
-    for (let split of splits) {
+    for (let i = 0; i < splits.length; i++) {
+      let split = splits[i]
       let name = split.type[0].toUpperCase() + split.type.slice(1) + ' ' + split.zoneindex
       let time = split.duration
       let diff = (split.duration - split.compared_duration)
@@ -360,8 +504,16 @@ class TempusArchive {
 
       if (!secondary) subs = subs.replace(/^.*?(?:%SECON%|%DARY%|%SECONDARY%).*?(?:\n|$)/gm, '')
 
+      let next = splits[i + 1]
+      if (next) next = next.duration - split.duration
+
       points.push(
-        template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => t(pad + time + (Number(b) || 0)))
+        template.replace(/%TIME(?:\[(.*?)\])?%/g, (_, b) => {
+          let dur = Number(b) || 0
+          if (next && dur > next) dur = next
+          return t(pad + time + dur)
+        })
+          .replaceAll('%LAYER%', i + 1)
           .replaceAll('%NAME%', name)
           .replaceAll('%PRIMARY%', primary).replaceAll('%PRI%', pri).replaceAll('%MARY%', mary)
           .replaceAll('%SECONDARY%', secondary).replaceAll('%SECON%', secon).replaceAll('%DARY%', dary)
@@ -381,8 +533,10 @@ class TempusArchive {
     let zones = this.levelzones[rec.map]
 
     if (zones && !['bonus', 'trick'].includes(rec.z.type)) {
+      util.mkdir(this.tmp)
       let demo = await TemRec.prototype.demo.call({ tmp: this.tmp, emit: () => {} }, rec.demo)
       let boxes = boxticks(demo, rec.player, zones, [rec.start, rec.end])
+      util.remove(this.tmp)
 
       if (boxes.length) {
         let desc = '\n\n0:00 Start'
@@ -468,10 +622,16 @@ class TempusArchive {
     return res
   }
 
-  async #thumb (file, seconds) {
-    let path = util.join(this.tmp, this.cfg.thumb)
-    await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" "${path}"`)
-    return 'data:image/png;base64,' + util.read(path, 'base64')
+  async #thumb (file, seconds, path) {
+    if (!util.exists(path)) await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -y "${path}"`)
+    let thumb = 'data:image/png;base64,' + util.read(path, 'base64')
+    if (thumb.length > 2000000) { // use jpg if thumbnail is bigger than 2MB
+      let jpg = path.replace('.png', '.jpg')
+      thumb = await util.exec(`ffmpeg -ss ${seconds}s -i "${file}" -frames:v 1 -vf "scale=1280x720" -q:v 1 -qmin 1 -y "${jpg}"`)
+      thumb = 'data:image/jpeg;base64,' + util.read(jpg, 'base64')
+      util.remove(jpg)
+    }
+    return thumb
   }
 
   #merge (source, target) {

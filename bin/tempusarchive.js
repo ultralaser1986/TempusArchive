@@ -12,14 +12,50 @@ let MEDAL = '[TempusArchive]'
 let MEDAL_OPEN = '╔════════╗'
 let MEDAL_CLOSE = '╚════════╝'
 
+let start = Date.now()
+
+let once = false
+let KILLERS = ['error', 'exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'uncaughtException', 'unhandledRejection']
+KILLERS.forEach(killer => process.on(killer, e => {
+  try {
+    if (!once) {
+      once = true
+
+      console.log(`\n[TIMELOG] Start: ${start}, End: ${Date.now()}, Elapsed: ${util.formatTime(Date.now() - start, 0)}`)
+
+      util.remove(ta.tmp)
+
+      if (ta.tr.app) {
+        ta.tr.app.send('quit')
+        ta.tr.app.exit()
+      }
+
+      ta.exit(true)
+    }
+  } catch (e) {}
+  if (['uncaughtException', 'unhandledRejection'].includes(killer)) console.error(e)
+  if (killer !== 'exit') process.exit()
+}))
+
+let re = {
+  fail: x => {
+    return async (i, r, t) => {
+      await ta.yt.updateSession()
+      if (ta.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+    }
+  }
+}
+
 program
   .command('run')
   .description('start rendering')
   .argument('[ids...]', 'list of specific record ids to be rendered, otherwise renders all pending ones')
   .option('-n, --max <number>', 'limit number of records to render', 0)
+  .option('-nt, --ntime <seconds>', 'limit amount of records rendered by seconds', 0)
+  .option('-ns, --nsize <bytes>', 'limit amount of records rendered by bytes', 0)
   .option('-s, --shuffle', 'randomize the order of the records', false)
-  .option('-k, --no-upload', 'skip uploading and don\'t delete output files', true)
-  // .option('-w, --no-update', 'skip updating of records file and display a warning if file is older than a day', true)
+  .option('-l, --no-upload', 'skip uploading and don\'t delete output files', true)
+  .option('-k, --keep', 'don\'t delete output files', false)
   .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
@@ -28,7 +64,9 @@ program
   .command('update')
   .description('update databases')
   .argument('[types...]', 'database types to update (players/records/uploads)')
-  .action(types => {
+  .option('-f, --full', 'full update')
+  .option('-v, --verbose', 'display wiped and skipped video ids')
+  .action((types, opts) => {
     if (!types.length) types = ['players', 'records', 'uploads']
 
     types = types.reduce((obj, item) => {
@@ -36,15 +74,19 @@ program
       return obj
     }, {})
 
-    ta.update(types)
+    ta.update(types, opts.full, opts.verbose)
   })
 
 program
   .command('cleanup')
   .description('delete leftover temporary files')
-  .action(() => {
-    ta.tr.init()
-    util.remove([ta.cfg.state, ta.cfg.report, ta.cfg.velo])
+  .option('-f, --full', 'delete output folder as well')
+  .action(opts => {
+    util.remove([ta.cfg.state, ta.cfg.bulk, ta.cfg.report])
+    if (opts.full) {
+      util.remove(ta.cfg.output)
+      util.mkdir(ta.cfg.output)
+    }
   })
 
 program
@@ -65,8 +107,195 @@ program
   .command('check')
   .description('check if keys.json is valid')
   .action(async () => {
-    ta.tr.init()
     console.log(await ta.yt.updateSession())
+  })
+
+program
+  .command('wipe')
+  .description('unlist a youtube video and mark it as wiped')
+  .argument('<video ids...>', 'youtube video ids')
+  .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
+
+    let ans = await util.question(`Are you sure you want to [wipe] ${ids.length} videos? y/n `)
+    if (ans !== 'y') return
+
+    await ta.yt.updateSession()
+
+    let res = await ta.yt.listVideos(ids)
+
+    for (let item of res.items) {
+      let vid = item.videoId
+      let title = item.title.replace(/^((!|\?) )?/, '? ')
+
+      let pls = Object.values(ta.cfg.playlist)
+      pls = pls.splice(pls.indexOf(ta.cfg.playlist.wiped), 1)
+
+      await util.retry(() => ta.yt.updateVideo(vid, {
+        privacyState: { newPrivacy: 'UNLISTED' },
+        scheduledPublishing: { remove: {} },
+        addToPlaylist: { deleteFromPlaylistIds: pls, addToPlaylistIds: [ta.cfg.playlist.wiped] },
+        title: { newTitle: title }
+      }), re.fail('wiping video'), e => { throw e })
+
+      for (let zone in ta.uploads) {
+        for (let id in ta.uploads[zone]) {
+          if (vid === ta.uploads[zone][id]) {
+            delete ta.uploads[zone][id]
+            if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
+            ta.uploads.export()
+            break
+          }
+        }
+      }
+
+      console.log(`Wiped: ${title} (${vid})`)
+    }
+  })
+
+program
+  .command('info')
+  .description('view info about a youtube video')
+  .argument('<video ids...>', 'youtube video ids')
+  .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
+
+    let res = await ta.yt.listVideos(ids)
+
+    for (let item of res.items) console.log(`${item.title} (${item.videoId})`)
+  })
+
+program
+  .command('delete')
+  .description('delete youtube videos')
+  .argument('<video ids...>', 'youtube video ids')
+  .action(async (ids) => {
+    if (ids[0] === 'bulk') {
+      if (!util.exists(ta.cfg.bulk)) return util.log('No bulk.json found!')
+      ids = JSON.parse(util.read(ta.cfg.bulk))
+    }
+
+    let ans = await util.question(`Are you sure you want to [delete] ${ids.length} videos? y/n `)
+    if (ans !== 'y') return
+
+    await ta.yt.updateSession()
+
+    let res = await ta.yt.listVideos(ids)
+
+    for (let item of res.items) {
+      let vid = item.videoId
+
+      await util.retry(async () => {
+        await ta.yt.updateVideo(vid, {
+          addToPlaylist: { deleteFromPlaylistIds: Object.values(ta.cfg.playlist) }
+        })
+
+        await ta.yt.deleteVideo(vid)
+      }, re.fail('deleting video'), e => { throw e })
+
+      for (let zone in ta.uploads) {
+        for (let id in ta.uploads[zone]) {
+          if (vid === ta.uploads[zone][id]) {
+            delete ta.uploads[zone][id]
+            if (!Object.keys(ta.uploads[zone]).length) delete ta.uploads[zone]
+            ta.uploads.export()
+            break
+          }
+        }
+      }
+
+      console.log(`Deleted: ${item.title} (${vid})`)
+    }
+  })
+
+program
+  .command('bulk')
+  .description('search for multiple videos and save to file')
+  .argument('<value>', 'value to match in title or desc')
+  .action(async (value) => {
+    await ta.yt.updateSession()
+
+    let filter = {
+      or: {
+        operands: [
+          { descriptionPrefixed: { value } },
+          { titlePrefixed: { value } }
+        ]
+      }
+    }
+
+    let items = []
+
+    let loopVids = async next => {
+      let res = await ta.yt.listVideos(null, filter, next)
+
+      items.push(...res.items.map(x => x.videoId))
+      util.log(`Fetching videos... ${items.length}`)
+
+      if (res.next) await loopVids(res.next)
+    }
+    await loopVids()
+
+    util.write(ta.cfg.bulk, JSON.stringify(items))
+    util.log(`Fetched ${items.length} videos. Saved in '${ta.cfg.bulk}'`)
+  })
+
+program
+  .command('reportfix')
+  .description('fix issues in the report.json file')
+  .action(async () => {
+    if (!util.exists(ta.cfg.report)) return util.log('No report.json found!')
+    let report = JSON.parse(util.read(ta.cfg.report, 'utf-8'))
+
+    // fix privacy
+    for (let privacy in report.privacy) {
+      let items = report.privacy[privacy]
+      for (let i = 0; i < items.length; i++) {
+        util.log(`[reportfix] Set privacy to ${privacy} - ${i + 1}/${items.length} (${items[i]})`)
+
+        await util.retry(() => ta.yt.updateVideo(items[i], {
+          privacyState: { newPrivacy: privacy.toUpperCase() },
+          scheduledPublishing: { remove: {} }
+        }), re.fail('updating privacy'), e => { throw e })
+      }
+      util.log(`[reportfix] Changed ${items.length} videos to ${privacy}!\n`)
+    }
+
+    // fix desc chains
+    let items = Object.keys(report.update)
+    if (items.length) {
+      let res = await ta.yt.listVideos(items)
+      for (let i = 0; i < res.items.length; i++) {
+        let item = res.items[i]
+        let rep = report.update[item.videoId]
+
+        util.log(`[reportfix] Updating desc chain ${i + 1}/${res.items.length} (${item.videoId})`)
+
+        let desc = item.description
+
+        if (rep === '') {
+          desc = desc.replace(/.*https:\/\/youtu\.be\/.*/, '')
+        } else {
+          desc = desc.replace(/(https:\/\/youtu\.be\/).*/, `$1${rep}`)
+          if (desc === item.description) {
+            desc = desc.replace(/(?<=\n)/, `Previous Record: https://youtu.be/${rep}`)
+          }
+        }
+
+        await util.retry(() => ta.yt.updateVideo(item.videoId, {
+          description: { newDescription: desc }
+        }), re.fail('updating desc chain'), e => { throw e })
+      }
+      util.log(`[reportfix] Updated ${res.items.length} desc chains!\n`)
+    }
+
+    util.remove(ta.cfg.report)
   })
 
 program
@@ -104,6 +333,8 @@ async function run (ids, opts) {
   }
 
   let start = opts.index ?? 0
+  let time = opts.time ?? 0
+  let size = opts.size ?? 0
 
   console.log(MEDAL, `Queued ${ids.length - start} record${ids.length === 1 ? '' : 's'} for render.`)
 
@@ -112,14 +343,34 @@ async function run (ids, opts) {
   else if (opts.unlisted) status = 'UNLISTED'
   console.log(MEDAL, `Upload Mode: ${status}`)
 
-  await ta.launch()
+  // await ta.launch()
 
   for (let i = start; i < ids.length; i++) {
-    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i } }))
+    if (time && Number(opts.ntime) && time > opts.ntime) {
+      console.log(MEDAL, `ntime limit reached (${time.toFixed(1)}s > ${opts.ntime.toFixed(1)}s)! Quitting...`)
+      break
+    }
+
+    if (size && Number(opts.nsize) && size > opts.nsize) {
+      console.log(MEDAL, `nsize limit reached (${size}B > ${opts.nsize}B)! Quitting...`)
+      break
+    }
+
+    util.write(ta.cfg.state, JSON.stringify({ ids, opts: { ...opts, index: i, time, size } }))
 
     let id = ids[i]
 
-    let rec = await ta.fetch(id)
+    let rec = await ta.fetch(id).catch(e => {
+      if (e.toString().indexOf('not found!') >= 0) return null
+      throw e
+    })
+
+    if (!rec) {
+      console.log(MEDAL, `Record ${id} not found! Skipping...`)
+      continue
+    }
+
+    id = rec.id // incase we load a json file
 
     console.log(MEDAL_OPEN, `${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% >> (${rec.id}): "${rec.display}"`)
 
@@ -128,50 +379,63 @@ async function run (ids, opts) {
       continue
     }
 
-    let file = null
+    rec.file = util.join(ta.cfg.output, id + '.mp4')
+    rec.velo = util.join(ta.cfg.output, id + '.velo')
+    rec.thumb = util.join(ta.cfg.output, id + '.png') // created in upload step
 
-    try {
-      file = await ta.record(rec, 'default', 'default')
-    } catch (e) {
-      console.log('\n', MEDAL_CLOSE, 'Error during record! Aborting process...')
-      console.error(e)
+    if (util.exists(rec.file) && util.exists(rec.velo)) {
+      console.log(MEDAL, `Using existing file: "${rec.file}"`)
+    } else {
+      try {
+        if (!ta.tr.app) await ta.launch()
+        rec.file = await ta.record(rec, 'default', 'default')
+      } catch (e) {
+        console.log('\n')
+        console.log(MEDAL_CLOSE, 'Error during record! Aborting process...')
+        throw e
+      }
+
+      if (rec.file === null) {
+        console.log(MEDAL_CLOSE, 'Skipping record.')
+        continue
+      }
+    }
+
+    time += rec.time
+    size += util.size(rec.file, true)
+
+    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${rec.file}"`)
+    if (res.stdout.trim() === '1024x1024') {
+      console.log(MEDAL_CLOSE, 'Error! Video output is corrupted.')
+      await ta.exit(true)
       return
     }
-
-    if (file === null) {
-      console.log(MEDAL_CLOSE, 'Skipping record.')
-      continue
-    }
-
-    let res = await util.exec(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${file}"`)
-    if (res.stdout.trim() === '1024x1024') throw Error('Video output is corrupted.')
 
     if (opts.upload) {
       try {
         util.log(`${MEDAL_CLOSE} Uploading...`)
-        let vid = await ta.upload(rec, file, progress => {
+        let vid = await ta.upload(rec, rec.file, progress => {
           util.log(`${MEDAL_CLOSE} Uploading... ${(progress * 100).toFixed(2)}%`)
         }, opts.unlisted)
-        util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(file)}>\n`)
-        util.remove(file)
+        util.log(`${MEDAL_CLOSE} https://youtu.be/${vid} <${util.size(rec.file)}>\n`)
+        if (opts.keep) console.log(MEDAL_CLOSE, `Output: "${rec.file}"`)
+        else util.remove([rec.file, rec.velo, rec.thumb])
       } catch (e) {
-        console.log('\n', MEDAL_CLOSE, 'Error during upload! Aborting process...')
-        console.error(e)
-        return
+        console.log('\n')
+        if (e.toString().indexOf('UPLOAD_STATUS_REASON_RATE_LIMIT_EXCEEDED') >= 0) {
+          await ta.exit(true)
+          console.log(MEDAL_CLOSE, 'Upload limit hit! Waiting 12h...')
+          await new Promise(resolve => setTimeout(resolve, 43200000))
+          return
+        } else {
+          console.log(MEDAL_CLOSE, 'Error during upload! Aborting process...')
+          throw e
+        }
       }
-    } else console.log(MEDAL_CLOSE, `Output: "${file}"`)
+    } else console.log(MEDAL_CLOSE, `Output: "${rec.file}"`)
   }
 
   util.remove(ta.cfg.state)
 
   await ta.exit()
 }
-
-let KILLERS = ['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2']
-KILLERS.forEach(killer => process.on(killer, () => {
-  try {
-    util.remove(ta.tmp)
-    if (ta.tr.app) ta.exit(true)
-    if (killer !== 'exit') process.exit()
-  } catch (e) {}
-}))

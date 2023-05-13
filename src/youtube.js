@@ -4,8 +4,6 @@ let ph = require('path')
 let crypto = require('crypto')
 let risk = require('./risk')
 
-let util = require('./util')
-
 let AZ = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 let INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
 let CHUNK_SIZE = 262144 * 20
@@ -95,7 +93,7 @@ YouTube.prototype.uploadVideo = async function (file, meta = {}, progress) {
 
 YouTube.prototype.updateVideo = async function (vid, data) {
   try {
-    await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
+    let res = await dp.post('https://studio.youtube.com/youtubei/v1/video_manager/metadata_update', {
       query: {
         alt: 'json',
         key: INNERTUBE_KEY
@@ -110,7 +108,11 @@ YouTube.prototype.updateVideo = async function (vid, data) {
         context: this.context(),
         ...data
       }
-    })
+    }).json()
+    if (res.overallResult.resultCode !== 'UPDATE_SUCCESS') {
+      console.error(res)
+      throw Error('Failed to update')
+    }
   } catch (e) { throw JSON.parse(e.body).error }
 }
 
@@ -204,8 +206,10 @@ YouTube.prototype.sendVideoBinary = async function (video, progress) {
   })
 }
 
-YouTube.prototype.listVideos = async function (next) {
-  let body = await dp.post('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos', {
+YouTube.prototype.listVideos = async function (vids, filter, next) {
+  if (!vids || !Array.isArray(vids)) vids = []
+  let method = vids.length ? 'get' : 'list'
+  let body = await dp.post(`https://studio.youtube.com/youtubei/v1/creator/${method}_creator_videos`, {
     query: {
       alt: 'json',
       key: INNERTUBE_KEY
@@ -221,8 +225,11 @@ YouTube.prototype.listVideos = async function (next) {
         title: true,
         description: true,
         privacy: true,
-        timeCreatedSeconds: true
+        timeCreatedSeconds: true,
+        thumbnailEditorState: { all: true }
       },
+      filter,
+      videoIds: vids,
       pageToken: next,
       context: this.context()
     },

@@ -32,7 +32,9 @@ module.exports = {
 
     let t = [h, m, s].filter(x => x !== null).map((x, i) => (i !== 0 && x < 10 && x !== '00') ? '0' + x : x)
 
-    return (invert ? '-' : '') + t.join(':') + (decimals ? '.' + (ms % 1).toFixed(decimals).slice(2) : '')
+    let decs = (ms % 1).toString().slice(2) + '0'.repeat(16)
+
+    return (invert ? '-' : '') + t.join(':') + (decimals ? '.' + decs.slice(0, decimals) : '')
   },
   maxLen (str, len) {
     if (str.length > len) str = str.slice(0, len - 3).trim() + '...'
@@ -79,8 +81,9 @@ module.exports = {
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
   },
-  size (file) {
-    return this.formatBytes(fs.statSync(file).size)
+  size (file, raw = false) {
+    let s = fs.statSync(file).size
+    return raw ? s : this.formatBytes(s)
   },
   exists (file) {
     return fs.existsSync(file)
@@ -145,5 +148,29 @@ module.exports = {
       if (typeof x[key] === 'object' && Object.keys(x[key]).length === 0 && !(x[key] instanceof Date)) delete x[key]
     })
     return x
+  },
+  async question (msg) {
+    let rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    })
+
+    return new Promise(resolve => rl.question(msg, ans => {
+      rl.close()
+      resolve(ans)
+    }))
+  },
+  async retry (fn, fail, error) {
+    let retries = 5
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await fn()
+      } catch (e) {
+        if (i === retries) return error ? error(e) : false
+        let time = (i + 1) * 10 * 1000
+        if (fail) await fail(i, retries, time)
+        await new Promise(resolve => setTimeout(resolve, time))
+      }
+    }
   }
 }

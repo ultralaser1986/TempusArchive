@@ -1,9 +1,12 @@
 let dp = require('despair')
 let util = require('./util')
 
-let base = 'https://tempus.xyz/api'
+let base = 'https://tempus2.xyz/api/v0'
 
 module.exports = {
+  async getActivity () {
+    return await dp(base + '/activity').json().catch(() => null)
+  },
   async getMapList () {
     return await dp(base + '/maps/detailedList').json().catch(() => null)
   },
@@ -13,8 +16,8 @@ module.exports = {
   async getDiffFromRecord (rec) {
     let c = rec.class === 'S' ? 'soldier' : 'demoman'
     let m = await this.getMapRecords(rec.z.map, rec.z.type, rec.z.index, 100)
-    let w = rec.rank !== 1 ? m.results[c][0] : m.results[c].slice(1).find(x => x.duration > rec.time)
-    return w ? (rec.time - w.duration) : 0
+    let w = rec.rank !== 1 ? m.results[c][0] : m.results[c][1]
+    return w ? (rec.time - w.duration) : null
   },
   formatDisplay (rec, nick) {
     let type = rec.z.type
@@ -32,6 +35,7 @@ module.exports = {
   },
   formatTier (tier) {
     switch (Number(tier)) {
+      case 0: return 'Impossible'
       case 1: return 'Very Easy'
       case 2: return 'Easy'
       case 3: return 'Medium'
@@ -40,6 +44,12 @@ module.exports = {
       case 6: return 'Insane'
     }
     return 'Unknown'
+  },
+  formatClass (num) {
+    switch (num) {
+      case 3: return 'S'
+      case 4: return 'D'
+    }
   },
   async getMapWRS (map) {
     return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)
