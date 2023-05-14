@@ -396,7 +396,7 @@ async function run (ids, opts) {
   for (let list of ['records', 'uploads', 'players']) {
     if (!util.exists(ta.cfg[list])) {
       console.log(MEDAL, `Missing ${list} file! Updating...`)
-      await ta.update({ [list]: true })
+      await ta.update({ [list]: true }, true)
     }
   }
 
