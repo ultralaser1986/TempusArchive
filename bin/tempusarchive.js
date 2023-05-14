@@ -68,8 +68,9 @@ program
 
 program
   .command('check')
+  .option('-k, --keep', 'don\'t delete output files', false)
   .description('check and process videos that are ready')
-  .action(async () => {
+  .action(async opts => {
     let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PRIVATE' } }
     let mask = { videoResolutions: { all: true }, tags: { all: true } }
 
@@ -125,6 +126,14 @@ program
           privacyState: { newPrivacy: 'UNLISTED' },
           addToPlaylist: { deleteFromPlaylistIds: [playlist] }
         }), re.fail(`updating metadata of old record (${override})`), e => { throw e })
+      }
+
+      if (!opts.keep) {
+        util.remove([
+          util.join(ta.cfg.output, vid + '.mp4'),
+          util.join(ta.cfg.output, vid + '.velo'),
+          util.join(ta.cfg.output, vid + '.png')
+        ])
       }
     }
   })
