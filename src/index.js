@@ -9,21 +9,6 @@ ListStore.setValueSwaps([undefined, true], ['X', false])
 
 let REQUIRED_RECORD_PROPS = ['id', 'key', 'date', 'class', 'tier', 'zone', 'map', 'demo', 'start', 'end', 'time', 'player', 'nick', 'z', 'z.demo', 'z.type', 'z.index', 'z.custom', 'display', 'diff']
 
-let re = {
-  fail: x => {
-    return async (i, r, t) => {
-      await this.yt.updateSession()
-      if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
-    }
-  },
-  del: async (e, vid) => {
-    if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
-
-    await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
-    throw e
-  }
-}
-
 class TempusArchive {
   constructor (config) {
     this.cfg = require(config)
@@ -149,6 +134,21 @@ class TempusArchive {
   }
 
   async upload (rec, file, progress, skip = false) {
+    let re = {
+      fail: x => {
+        return async (i, r, t) => {
+          await this.yt.updateSession()
+          if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+        }
+      },
+      del: async (e, vid) => {
+        if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+
+        await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
+        throw e
+      }
+    }
+
     await this.yt.updateSession()
 
     let override = this.uploads[rec.key]
