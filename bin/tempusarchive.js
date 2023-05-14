@@ -87,7 +87,7 @@ program
       next = res.next
     } while (next)
 
-    util.log(`Fetched ${items.length} videos!`)
+    util.log(`Fetched ${items.length} videos!\n`)
 
     items = items.reverse() // important, avoids having to check overrides recursively
 
@@ -97,6 +97,9 @@ program
       // TODO: check for corruption here
 
       let vid = item.videoId
+
+      util.log(`[${i + 1}/${items.length} ] Checking ${vid}`)
+
       let tags = item.tags.map(x => x.value)
 
       let take = pre => {
@@ -136,6 +139,7 @@ program
         ])
       }
     }
+    util.log(`[${items.length}/${items.length}] Done!\n`)
   })
 
 program
