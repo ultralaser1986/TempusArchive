@@ -106,6 +106,7 @@ YouTube.prototype.updateVideo = async function (vid, data) {
       data: {
         encryptedVideoId: vid,
         context: this.context(),
+        failOnError: true,
         ...data
       }
     }).json()
@@ -113,7 +114,7 @@ YouTube.prototype.updateVideo = async function (vid, data) {
       console.error(res)
       throw Error('Failed to update')
     }
-  } catch (e) { throw JSON.parse(e.body).error }
+  } catch (e) { throw e.body ? JSON.parse(e.body).error : e }
 }
 
 YouTube.prototype.describeFile = async function (video) {
@@ -206,7 +207,8 @@ YouTube.prototype.sendVideoBinary = async function (video, progress) {
   })
 }
 
-YouTube.prototype.listVideos = async function (vids, filter, next) {
+YouTube.prototype.listVideos = async function (vids, opts, next) {
+  if (!opts) opts = {}
   if (!vids || !Array.isArray(vids)) vids = []
   let method = vids.length ? 'get' : 'list'
   let body = await dp.post(`https://studio.youtube.com/youtubei/v1/creator/${method}_creator_videos`, {
@@ -226,9 +228,9 @@ YouTube.prototype.listVideos = async function (vids, filter, next) {
         description: true,
         privacy: true,
         timeCreatedSeconds: true,
-        thumbnailEditorState: { all: true }
+        ...opts.mask
       },
-      filter,
+      filter: opts.filter,
       videoIds: vids,
       pageToken: next,
       context: this.context()

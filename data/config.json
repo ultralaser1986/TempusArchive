@@ -17,7 +17,6 @@
     "curves": "data/curves.acv",
     "new_map_wait": 604800000, 
     "record_update_wait":  72000000,
-    "publish_wait": 86400000,
     "caption_limit_reduced": 6600,
     "caption_limit_max": 13200,
     "caption_limit_style": 50000,
@@ -29,6 +28,11 @@
         "game": "/m/060phy",
         "category": 20,
         "tags": ["tf2", "jump", "team fortress 2", "rocket jumping", "sticky jumping", "tempus network", "soldier", "demoman", "demo"]
+    },
+    "prefix": {
+        "pending": "$",
+        "skipped": "!",
+        "wiped": "?"
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
     "state": "STATE",

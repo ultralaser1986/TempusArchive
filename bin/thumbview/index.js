@@ -15,7 +15,7 @@ async function main (max) {
   let thumbs = {}
 
   let loopVids = async next => {
-    let res = await ta.yt.listVideos(null, null, next)
+    let res = await ta.yt.listVideos(null, { mask: { thumbnailEditorState: { all: true } } }, next)
 
     total += res.items.length
     util.log(`Fetching videos... ${total}`)

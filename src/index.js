@@ -9,6 +9,21 @@ ListStore.setValueSwaps([undefined, true], ['X', false])
 
 let REQUIRED_RECORD_PROPS = ['id', 'key', 'date', 'class', 'tier', 'zone', 'map', 'demo', 'start', 'end', 'time', 'player', 'nick', 'z', 'z.demo', 'z.type', 'z.index', 'z.custom', 'display', 'diff']
 
+let re = {
+  fail: x => {
+    return async (i, r, t) => {
+      await this.yt.updateSession()
+      if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
+    }
+  },
+  del: async (e, vid) => {
+    if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+
+    await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
+    throw e
+  }
+}
+
 class TempusArchive {
   constructor (config) {
     this.cfg = require(config)
@@ -133,13 +148,13 @@ class TempusArchive {
     return file
   }
 
-  async upload (rec, file, progress, single = false) {
+  async upload (rec, file, progress, skip = false) {
     await this.yt.updateSession()
 
     let override = this.uploads[rec.key]
     if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
 
-    if (single) override = null
+    if (skip) override = null
 
     let tier = null
     if (rec.z.type !== 'trick') tier = rec.tier
@@ -166,21 +181,6 @@ class TempusArchive {
       draftState: { isDraft: true }
     }, progress)
 
-    let re = {
-      fail: x => {
-        return async (i, r, t) => {
-          await this.yt.updateSession()
-          if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
-        }
-      },
-      del: async e => {
-        if (this.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
-
-        await util.retry(() => this.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
-        throw e
-      }
-    }
-
     let time = (this.cfg.padding / (200 / 3)) + (rec.time / 2)
     if (rec.splits) time = rec.splits[0].duration - 0.1
 
@@ -191,40 +191,28 @@ class TempusArchive {
     }
     let thumbnail = await util.retry(() => this.#thumb(file, time, rec.thumb), re.fail('making thumbnail'), e => { throw e })
 
-    let pl = !single ? this.cfg.playlist[rec.z.type] || null : null
-    if (!single && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
+    let pl = !skip ? this.cfg.playlist[rec.z.type] || null : null
+    if (!skip && this.cfg.DEBUG) console.log(`[DEBUGLOG] Playlist set to: ${pl} [${rec.z.type}]`)
 
     if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
-    let unlisted = single || this.cfg.unlisted.includes(rec.z.type)
+
+    let tags = [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index]
+    if (!skip) {
+      tags.push(`v:${this.cfg.unlisted.includes(rec.z.type) ? 'UNLISTED' : 'PUBLIC'}`)
+      if (override) tags.push(`o:${override}`)
+      if (pl) tags.push(`pl:${pl}`)
+    }
 
     await util.retry(() => this.yt.updateVideo(vid, {
       draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
-      privacyState: { newPrivacy: unlisted ? 'UNLISTED' : 'PRIVATE' },
-      scheduledPublishing: unlisted
-        ? {}
-        : {
-            set: {
-              privacy: 'PUBLIC',
-              timeSec: parseInt((Date.now() + this.cfg.publish_wait) / 1000).toString()
-            }
-          },
-      title: { newTitle: (single ? '! ' : '') + rec.display },
+      privacyState: { newPrivacy: skip ? 'UNLISTED' : 'PRIVATE' },
+      title: { newTitle: (skip ? this.cfg.prefix.skipped : this.cfg.prefix.pending) + ' ' + rec.display },
       description: { newDescription: desc },
       category: { newCategoryId: this.cfg.meta.category },
-      tags: { newTags: [...this.cfg.meta.tags, `ta${rec.id}`, rec.map.split('_', 2).join('_'), rec.z.type[0] + rec.z.index] },
+      tags: { newTags: tags },
       videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
-      gameTitle: { newKgEntityId: this.cfg.meta.game },
-      addToPlaylist: { addToPlaylistIds: [pl] }
-    }), re.fail('updating metadata'), re.del)
-
-    if (override) {
-      if (this.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
-      await util.retry(() => this.yt.updateVideo(override, {
-        privacyState: { newPrivacy: 'UNLISTED' },
-        scheduledPublishing: { remove: {} },
-        addToPlaylist: { deleteFromPlaylistIds: [pl] }
-      }), re.fail(`updating metadata of old record (${override})`), re.del)
-    }
+      gameTitle: { newKgEntityId: this.cfg.meta.game }
+    }), re.fail('updating metadata'), e => re.del(e, vid))
 
     if (util.exists(rec.velo)) {
       // captions over 13min~ wont have styling
@@ -240,11 +228,11 @@ class TempusArchive {
             this.#captions(rec.velo, rec, 3, 'Speedo (Absolute)'),
             this.#captions(rec.velo, rec, 4, 'Tick of Demo')
           ])
-        }, re.fail('adding captions'), re.del)
+        }, re.fail('adding captions'), e => re.del(e, vid))
       }
     }
 
-    if (!single) {
+    if (!skip) {
       if (this.cfg.DEBUG) console.log('[DEBUGLOG] Adding upload to database...')
       this.uploads.add(rec.key, rec.id, vid)
       this.uploads.export(this.cfg.uploads)
@@ -344,7 +332,7 @@ class TempusArchive {
 
     if (opts.uploads) {
       let uploads = new ListStore()
-      let status = { skips: [], wipes: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
+      let status = { pending: [], skips: [], wipes: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
       let info = {}
 
       util.log('[Uploads] Fetching videos...')
@@ -358,17 +346,17 @@ class TempusArchive {
         util.log(`[Uploads] Fetching videos... ${total}`)
 
         for (let item of res.items) {
-          let scheduled = item.scheduledPublishingDetails?.scheduledPublishings[0].action
-          if (scheduled) item.privacy = 'VIDEO_PRIVACY_' + scheduled.split('_').pop()
+          if (item.title[0] === this.cfg.prefix.pending) {
+            status.pending.push(item.videoId)
+            continue
+          }
 
-          if (item.privacy === 'VIDEO_PRIVACY_PRIVATE') continue
-
-          if (item.title[0] === '!') {
+          if (item.title[0] === this.cfg.prefix.skipped) {
             status.skips.push(item.videoId)
             continue
           }
 
-          if (item.title[0] === '?') {
+          if (item.title[0] === this.cfg.prefix.wiped) {
             status.wipes.push(item.videoId)
             continue
           }
@@ -430,11 +418,12 @@ class TempusArchive {
       if (status.privacy) console.log('Change Video Privacy:', status.privacy)
       if (status.update) console.log('Change Description Chain Id:', status.update)
       if (verbose) {
+        if (status.pending) console.log('Pending Records:', status.pending)
         if (status.skips) console.log('Skipped Records:', status.skips)
         if (status.wipes) console.log('Wiped Records:', status.wipes)
       }
 
-      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Skipped ${status.skips?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)
+      util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Pending ${status.pending?.length || 0}, Skipped ${status.skips?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)
 
       if (Object.keys(status).length) util.write(this.cfg.report, JSON.stringify(status, null, 2))
 

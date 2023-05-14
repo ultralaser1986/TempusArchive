@@ -43,6 +43,12 @@ let re = {
       await ta.yt.updateSession()
       if (ta.cfg.DEBUG) console.log(`[DEBUGLOG] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
     }
+  },
+  del: async (e, vid) => {
+    if (ta.cfg.DEBUG) console.log('[DEBUGLOG] Failed too many times! Deleting video...')
+
+    await util.retry(() => ta.yt.deleteVideo(vid), re.fail('deleting video'), e => { throw e })
+    throw e
   }
 }
 
@@ -59,6 +65,69 @@ program
   .option('-u, --unlisted', 'upload records unlisted without adding to database', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action((ids, opts) => run(ids, opts))
+
+program
+  .command('check')
+  .description('check and process videos that are ready')
+  .action(async () => {
+    let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PRIVATE' } }
+    let mask = { videoResolutions: { all: true }, tags: { all: true } }
+
+    let items = []
+    let next = null
+
+    do {
+      let res = await ta.yt.listVideos(null, { filter, mask }, next)
+
+      let vids = res.items.filter(x => x.videoResolutions?.statusSd === 'RESOLUTION_STATUS_DONE' && x.title.startsWith(ta.cfg.prefix.pending))
+      items.push(...vids)
+      util.log(`Fetching videos... ${items.length}`)
+
+      next = res.next
+    } while (next)
+
+    util.log(`Fetched ${items.length} videos!`)
+
+    items = items.reverse() // important, avoids having to check overrides recursively
+
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i]
+
+      // TODO: check for corruption here
+
+      let vid = item.videoId
+      let tags = item.tags.map(x => x.value)
+
+      let take = pre => {
+        let r = tags.findIndex(x => x.startsWith(pre + ':'))
+        return r !== -1 ? tags.splice(r, 1)[0].slice(pre.length + 1) : null
+      }
+
+      let visibility = take('v')
+      if (!visibility) throw Error(`Video '${vid}' with unknown visibility!`)
+      let override = take('o')
+      let playlist = take('pl')
+
+      let title = item.title.replace(/^(. )?/, '')
+
+      if (ta.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of video... (${vid})`)
+      await util.retry(() => ta.yt.updateVideo(vid, {
+        title: { newTitle: title },
+        tags: { newTags: tags },
+        privacyState: { newPrivacy: visibility },
+        addToPlaylist: { addToPlaylistIds: [playlist] }
+      }), re.fail('updating metadata'), e => { throw e }) // can also re.del(e, vid) here but for now we just throw error
+
+      if (override) {
+        if (ta.cfg.DEBUG) console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
+
+        await util.retry(() => ta.yt.updateVideo(override, {
+          privacyState: { newPrivacy: 'UNLISTED' },
+          addToPlaylist: { deleteFromPlaylistIds: [playlist] }
+        }), re.fail(`updating metadata of old record (${override})`), e => { throw e })
+      }
+    }
+  })
 
 program
   .command('update')
@@ -104,7 +173,7 @@ program
   })
 
 program
-  .command('check')
+  .command('keys')
   .description('check if keys.json is valid')
   .action(async () => {
     console.log(await ta.yt.updateSession())
@@ -129,14 +198,13 @@ program
 
     for (let item of res.items) {
       let vid = item.videoId
-      let title = item.title.replace(/^((!|\?) )?/, '? ')
+      let title = item.title.replace(/^(. )?/, ta.cfg.prefix.wiped + ' ')
 
       let pls = Object.values(ta.cfg.playlist)
       pls = pls.splice(pls.indexOf(ta.cfg.playlist.wiped), 1)
 
       await util.retry(() => ta.yt.updateVideo(vid, {
         privacyState: { newPrivacy: 'UNLISTED' },
-        scheduledPublishing: { remove: {} },
         addToPlaylist: { deleteFromPlaylistIds: pls, addToPlaylistIds: [ta.cfg.playlist.wiped] },
         title: { newTitle: title }
       }), re.fail('wiping video'), e => { throw e })
@@ -233,7 +301,7 @@ program
     let items = []
 
     let loopVids = async next => {
-      let res = await ta.yt.listVideos(null, filter, next)
+      let res = await ta.yt.listVideos(null, { filter }, next)
 
       items.push(...res.items.map(x => x.videoId))
       util.log(`Fetching videos... ${items.length}`)
@@ -260,39 +328,40 @@ program
         util.log(`[reportfix] Set privacy to ${privacy} - ${i + 1}/${items.length} (${items[i]})`)
 
         await util.retry(() => ta.yt.updateVideo(items[i], {
-          privacyState: { newPrivacy: privacy.toUpperCase() },
-          scheduledPublishing: { remove: {} }
+          privacyState: { newPrivacy: privacy.toUpperCase() }
         }), re.fail('updating privacy'), e => { throw e })
       }
       util.log(`[reportfix] Changed ${items.length} videos to ${privacy}!\n`)
     }
 
     // fix desc chains
-    let items = Object.keys(report.update)
-    if (items.length) {
-      let res = await ta.yt.listVideos(items)
-      for (let i = 0; i < res.items.length; i++) {
-        let item = res.items[i]
-        let rep = report.update[item.videoId]
+    if (report.update) {
+      let items = Object.keys(report.update)
+      if (items.length) {
+        let res = await ta.yt.listVideos(items)
+        for (let i = 0; i < res.items.length; i++) {
+          let item = res.items[i]
+          let rep = report.update[item.videoId]
 
-        util.log(`[reportfix] Updating desc chain ${i + 1}/${res.items.length} (${item.videoId})`)
+          util.log(`[reportfix] Updating desc chain ${i + 1}/${res.items.length} (${item.videoId})`)
 
-        let desc = item.description
+          let desc = item.description
 
-        if (rep === '') {
-          desc = desc.replace(/.*https:\/\/youtu\.be\/.*/, '')
-        } else {
-          desc = desc.replace(/(https:\/\/youtu\.be\/).*/, `$1${rep}`)
-          if (desc === item.description) {
-            desc = desc.replace(/(?<=\n)/, `Previous Record: https://youtu.be/${rep}`)
+          if (rep === '') {
+            desc = desc.replace(/.*https:\/\/youtu\.be\/.*/, '')
+          } else {
+            desc = desc.replace(/(https:\/\/youtu\.be\/).*/, `$1${rep}`)
+            if (desc === item.description) {
+              desc = desc.replace(/(?<=\n)/, `Previous Record: https://youtu.be/${rep}`)
+            }
           }
-        }
 
-        await util.retry(() => ta.yt.updateVideo(item.videoId, {
-          description: { newDescription: desc }
-        }), re.fail('updating desc chain'), e => { throw e })
+          await util.retry(() => ta.yt.updateVideo(item.videoId, {
+            description: { newDescription: desc }
+          }), re.fail('updating desc chain'), e => { throw e })
+        }
+        util.log(`[reportfix] Updated ${res.items.length} desc chains!\n`)
       }
-      util.log(`[reportfix] Updated ${res.items.length} desc chains!\n`)
     }
 
     util.remove(ta.cfg.report)
