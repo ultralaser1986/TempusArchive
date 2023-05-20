@@ -1,37 +1,32 @@
 let dp = require('despair')
-let util = require('./util')
 
-let base = 'https://tempus2.xyz/api/v0'
+let API_URL = 'https://tempus2.xyz/api/v0'
+let TFCLASS = { 3: 'soldier', 4: 'demoman' }
 
 module.exports = {
+  async getRecordOverview (id) {
+    return await dp(API_URL + `/records/id/${id}/overview`).json().catch(() => null)
+  },
   async getActivity () {
-    return await dp(base + '/activity').json().catch(() => null)
+    return await dp(API_URL + '/activity').json().catch(() => null)
   },
   async getMapList () {
-    return await dp(base + '/maps/detailedList').json().catch(() => null)
+    return await dp(API_URL + '/maps/detailedList').json().catch(() => null)
   },
   async getMapRecords (id, zone, index, limit = 1) {
-    return await dp(base + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
+    return await dp(API_URL + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
+  },
+  async getZoneRecords (id, limit = 1) {
+    return await dp(API_URL + `/zones/id/${id}/records/list?limit=${limit}`).json().catch(() => null)
   },
   async getDiffFromRecord (rec) {
-    let c = rec.class === 'S' ? 'soldier' : 'demoman'
-    let m = await this.getMapRecords(rec.z.map, rec.z.type, rec.z.index, 100)
-    let w = rec.rank !== 1 ? m.results[c][0] : m.results[c][1]
-    return w ? (rec.time - w.duration) : null
+    let c = TFCLASS[rec.record_info.class]
+    let m = await this.getZoneRecords(rec.record_info.zone_id, 100)
+    let w = rec.record_info.rank !== 1 ? m.results[c][0] : m.results[c][1]
+    return w ? (rec.record_info.duration - w.duration) : null
   },
-  formatDisplay (rec, nick) {
-    let type = rec.z.type
-    if (type === 'map') type = ''
-    else type = `${type[0].toUpperCase()}${type.slice(1)} ${rec.z.index}`
-    let custom = rec.z.custom
-
-    let time = util.formatTime(rec.time * 1000)
-
-    let title = `[${rec.class}] ${nick || rec.nick} on ${rec.map} ${type}`.trim()
-    if (custom) title += ` (${util.maxLen(custom, 30)})`
-    title += ` - ${time}`
-
-    return title
+  async getMapWRS (map) {
+    return await dp(API_URL + `/maps/name/${map}/wrs`).json().catch(() => null)
   },
   formatTier (tier) {
     switch (Number(tier)) {
@@ -50,8 +45,5 @@ module.exports = {
       case 3: return 'S'
       case 4: return 'D'
     }
-  },
-  async getMapWRS (map) {
-    return await dp(base + `/maps/name/${map}/wrs`).json().catch(() => null)
   }
 }

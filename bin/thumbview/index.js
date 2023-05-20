@@ -5,17 +5,20 @@ let ph = require('path')
 process.chdir(ph.dirname(ph.join(__dirname, '..')))
 
 let util = require('../../src/util')
-
-let TempusArchive = require('../../src')
-let ta = new TempusArchive('../data/config.json')
+let cfg = require('../../data/config.json')
+let YouTube = require('../../src/lib/YouTube')
+let yt = new YouTube(cfg.youtube)
 
 async function main (max) {
   max = (max && !isNaN(max)) ? Number(max) : 0
   let total = 0
   let thumbs = {}
 
-  let loopVids = async next => {
-    let res = await ta.yt.listVideos(null, { mask: { thumbnailEditorState: { all: true } } }, next)
+  let next = null
+
+  do {
+    let res = await yt.listVideos(null, { mask: { thumbnailEditorState: { all: true } } }, next)
+    next = res.next
 
     total += res.items.length
     util.log(`Fetching videos... ${total}`)
@@ -24,10 +27,8 @@ async function main (max) {
       thumbs[item.videoId] = item.thumbnailEditorState.stills.at(-1).thumbnails[0].url
     }
 
-    if (max && total >= max) return
-    if (res.next) await loopVids(res.next)
-  }
-  await loopVids()
+    if (max && total >= max) break
+  } while (next)
 
   let html = util.read(ph.join(__dirname, 'template.html'), 'utf-8')
   html = html.replace('<!--%THUMBS%-->', `<script>window.thumbnails = ${JSON.stringify(thumbs)}</script>`)

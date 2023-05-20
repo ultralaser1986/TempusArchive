@@ -45,14 +45,14 @@ module.exports = {
     for (let f of file) fs.existsSync(f) && fs.rmSync(f, { force: true, recursive: true })
   },
   read (file, encoding) {
-    return fs.readFileSync(file, encoding)
+    return fs.statSync(file).isDirectory() ? fs.readdirSync(file, encoding) : fs.readFileSync(file, encoding)
   },
   write (file, data) {
     fs.writeFileSync(file, data)
   },
-  async exec (cmd) {
+  async exec (cmd, opts = {}) {
     return new Promise(resolve => {
-      child.exec(cmd, { stdio: 'pipe' }, (err, stdout, stderr) => {
+      child.exec(cmd, { stdio: 'pipe', ...opts }, (err, stdout, stderr) => {
         if (err) throw err
         resolve({ stdout, stderr })
       })
@@ -67,8 +67,18 @@ module.exports = {
   mkdir (path) {
     if (!this.exists(path)) fs.mkdirSync(path)
   },
+  dirname (path) {
+    return ph.dirname(path)
+  },
+  basename (path) {
+    return ph.basename(path)
+  },
   copy (from, to) {
     fs.copyFileSync(from, to)
+  },
+  rename (from, to) {
+    this.copy(from, to)
+    this.remove(from)
   },
   formatBytes (bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes'
@@ -172,5 +182,13 @@ module.exports = {
         await new Promise(resolve => setTimeout(resolve, time))
       }
     }
+  },
+  globals (obj) {
+    for (let key in obj) {
+      global[key] = obj[key]
+    }
+  },
+  s: n => {
+    return n === 1 ? '' : 's'
   }
 }

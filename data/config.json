@@ -14,8 +14,8 @@
     "velo": "data/output/velo.txt",
     "subs": "subs.ass",
     "sfx": "sfx.wav",
+    "caps": "caps.ytt",
     "curves": "data/curves.acv",
-    "new_map_wait": 604800000, 
     "record_update_wait":  72000000,
     "caption_limit_reduced": 6600,
     "caption_limit_max": 13200,
@@ -31,7 +31,7 @@
     },
     "prefix": {
         "pending": "$",
-        "skipped": "!",
+        "hidden": "!",
         "wiped": "?"
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
@@ -44,6 +44,5 @@
         "bonus": "PLA_TcYVYdyj8nDbGKQDNy8cTDIBG0Z5rR",
         "trick": "PLA_TcYVYdyj8A-IInfR_uu4m82hUO_QIg",
         "wiped": "PLA_TcYVYdyj9r6LHb_fluVjAoZGfFVrZA"
-    },
-    "DEBUG": true
+    }
 }
