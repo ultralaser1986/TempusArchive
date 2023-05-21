@@ -20,6 +20,7 @@ program
 
 async function main (ids, opts) {
   let skips = 0
+  let manual = !!ids.length
 
   if (opts.continue) {
     console.log('Continuing from previous state...')
@@ -109,7 +110,8 @@ async function main (ids, opts) {
     else if (!opts.standalone) await modules.queue.add(id)
   }
 
-  modules.clean()
+  // only clean files if we executed this file with specific ids or run mode is enabled
+  if (manual || opts.run) modules.clean()
 
   if (tr.app) await tr.exit()
 }

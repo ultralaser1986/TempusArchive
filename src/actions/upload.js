@@ -69,13 +69,11 @@ async function main (ids, opts) {
       if (count) console.log(`Cleaned ${count} file${util.s(count)} (${util.formatBytes(bytes)}) from disk.`)
     }
 
-    util.remove(cfg.tmp)
-    util.mkdir(cfg.tmp)
-
     i++
   }
 
-  if (!queue && !opts.run) modules.clean()
+  // only clean files if we executed this file with specific ids or run mode is enabled
+  if (!queue || opts.run) modules.clean()
 }
 
 async function upload (rec, captionStyle = 'default', hidden = false) {
