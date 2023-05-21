@@ -35,10 +35,20 @@ async function main (ids, opts) {
 
   util.mkdir(cfg.tmp)
 
-  let max = queue ? (await modules.queue.list()).length : ids.length
+  let i = 0
+  let max = ids.length
 
-  for (let i = 0; i < max; i++) {
-    let id = (queue ? await modules.queue.take(true) : ids[i]).toString()
+  while (true) {
+    let id = ids[i]
+
+    if (queue) {
+      let list = await modules.queue.list()
+      if (!list.length) break // break if done with queue list
+      id = list[0]
+      max = list.length + i
+    } else if (i >= ids.length) break // break if done with id list
+
+    id = id.toString()
 
     let rec = await modules.read(util.join(cfg.output, id), cfg.tmp, { json: true })
     if (!rec) return console.error(`Record ${id} not found on disk!`)
@@ -61,6 +71,8 @@ async function main (ids, opts) {
 
     util.remove(cfg.tmp)
     util.mkdir(cfg.tmp)
+
+    i++
   }
 
   if (!queue && !opts.run) modules.clean()
