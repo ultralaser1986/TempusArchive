@@ -12,6 +12,5 @@ program
   .option('-k, --keep', 'keep files after upload', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action(async (ids, opts) => {
-    if (util.read(cfg.output).length) return console.error('Output files exist, upload or delete them before running with run command.')
     await modules.record(ids, { ...opts, run: true })
   })
