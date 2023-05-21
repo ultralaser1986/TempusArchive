@@ -80,7 +80,7 @@ async function main (ids, opts) {
     console.log(`${MEDAL} ${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% << (${id}): "${modules.display(rec)}"`)
 
     let video = util.join(cfg.output, id + '.mp4')
-    if (await modules.read(video, null, { check: true })) console.log('Already exists')
+    if (await modules.read(video, null, { check: true })) console.log('Record found on disk!')
     else {
       video = await record(rec).catch(e => { return { error: e } })
       if (video.error !== undefined) {
@@ -124,7 +124,7 @@ async function remaining () {
     for (let id in record) {
       if (!record[id]) break // skip if demo not available
       if (stores.uploads[zone]?.[id]) break // skip if record already uploaded
-      if (await modules.read(util.join(cfg.output, id), null, { check: true, json: true })) break // skip if record exists on disk
+      // if (await modules.read(util.join(cfg.output, id), null, { check: true, json: true })) break // skip if record exists on disk
       if (options({ id }).skip && ++skips) break // skip if record is marked skip in overrides
       remaining.push(id)
     }
