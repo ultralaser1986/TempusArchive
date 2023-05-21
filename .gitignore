@@ -4,7 +4,8 @@
 /data/keys*.json
 /data/*.list
 sound.cache
-STATE
+data/STATE
+data/QUEUE
 /data/report.json
 /data/bulk.json
 /data/demos

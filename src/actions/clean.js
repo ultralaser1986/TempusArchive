@@ -13,7 +13,7 @@ function clean (full) {
   util.remove([cfg.tmp, cfg.state, cfg.velo, cfg.bulk, cfg.report, tr.game?.tmp])
   if (full) {
     let log = tr.game ? util.join(tr.game.dir, tr.game.log) : null
-    util.remove([cfg.output, log])
+    util.remove([cfg.output, cfg.queue, log])
     util.mkdir(cfg.output)
   }
 }

@@ -20,24 +20,30 @@ let RETRY = {
 program
   .command('upload')
   .description('upload records')
-  .argument('[ids...]', 'list of record ids to be uploaded, otherwise uploads all remaining ones in output folder')
+  .argument('[ids...]', 'list of record ids to be uploaded, otherwise checks queue if exists')
   .option('-h, --hidden', 'upload records as hidden', false)
   .option('-k, --keep', 'keep files after upload', false)
   .action(main)
 
 async function main (ids, opts) {
-  if (!ids.length) ids = remaining()
-  if (!ids.length) return console.info('No records in output folder!')
+  let queue = false
+
+  if (!ids.length) {
+    queue = !!(await modules.queue.take(true))
+    if (!queue) return console.info('No items in queue!')
+  }
 
   util.mkdir(cfg.tmp)
 
-  for (let i = 0; i < ids.length; i++) {
-    let id = ids[i].toString()
+  let max = queue ? (await modules.queue.list()).length : ids.length
+
+  for (let i = 0; i < max; i++) {
+    let id = (queue ? await modules.queue.take(true) : ids[i]).toString()
 
     let rec = await modules.read(util.join(cfg.output, id), cfg.tmp, { json: true })
     if (!rec) return console.error(`Record ${id} not found on disk!`)
 
-    if (!opts.run) console.log(`${MEDAL} ${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% << (${id}): "${modules.display(rec)}"`)
+    if (!opts.run) console.log(`${MEDAL} ${i + 1}/${max} ${((i + 1) / max * 100).toFixed(2)}% << (${id}): "${modules.display(rec)}"`)
 
     if (!opts.hidden && stores.uploads[rec.key]?.[id]) console.log(`Already Uploaded: ${stores.uploads[rec.key][id]}`)
     else {
@@ -45,6 +51,8 @@ async function main (ids, opts) {
       let vid = await upload(rec, 'default', opts.hidden)
       util.log(`${MEDAL} (${rec.id}) >> https://youtu.be/${vid}\n`)
     }
+
+    if (queue) await modules.queue.take()
 
     if (!opts.keep) {
       let { count, bytes } = await modules.sweep(rec)
@@ -55,15 +63,10 @@ async function main (ids, opts) {
     util.mkdir(cfg.tmp)
   }
 
-  if (!opts.run) modules.clean()
+  if (!queue && !opts.run) modules.clean()
 }
 
-function remaining () {
-  let files = util.read(cfg.output)
-  return [...new Set(files.map(x => x.replace(/\.[^/.]+$/, '')))].sort((a, b) => a - b)
-}
-
-async function upload (rec, captionStyle = 'default', hidden = false, progress) {
+async function upload (rec, captionStyle = 'default', hidden = false) {
   await yt.updateSession()
 
   let override = stores.uploads[rec.key]

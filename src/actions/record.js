@@ -14,6 +14,7 @@ program
   .option('-nt, --ntime <seconds>', 'limit amount of records rendered by seconds', 0)
   .option('-ns, --nsize <bytes>', 'limit amount of records rendered by bytes', 0)
   .option('-p, --pack', 'pack output files', false)
+  .option('-s, --standalone', 'dont add record to upload queue', false)
   .option('-c, --continue', 'continue from previous state if exists', false)
   .action(main)
 
@@ -105,6 +106,7 @@ async function main (ids, opts) {
     } else console.log(`${MEDAL} (${id}) >> ${Object.values(rec.files).join(' ')}`)
 
     if (opts.run) await modules.upload([id], opts)
+    else if (!opts.standalone) await modules.queue.add(id)
   }
 
   modules.clean()
