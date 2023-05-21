@@ -20,12 +20,14 @@ program
 
 let queue = {
   async add (data) {
+    data = data.toString()
+
     if (!util.exists(cfg.queue)) await this.update('')
 
     let list = await this.list()
-    let index = list.push(data)
 
-    await this.update(list.join('\n'))
+    let index = list.includes(data) ? -1 : list.push(data)
+    if (index !== -1) await this.update(list)
 
     return index
   },
@@ -35,16 +37,16 @@ let queue = {
     let list = await this.list()
     let data = list.shift()
 
-    if (!readOnly) await this.update(list.join('\n'))
+    if (!readOnly) await this.update(list)
 
     return data
   },
   async list () {
     if (!util.exists(cfg.queue)) return []
-    return await util.retry(() => util.read(cfg.queue, 'utf-8').split(/\r?\n/), RETRY.fail('reading queue'))
+    return await util.retry(() => util.read(cfg.queue, 'utf-8').split(/\r?\n/).filter(x => x), RETRY.fail('reading queue'))
   },
-  async update (data) {
-    return await util.retry(() => util.write(cfg.queue, data), RETRY.fail('updating queue'))
+  async update (list) {
+    return await util.retry(() => util.write(cfg.queue, list.filter(x => x).join('\n')), RETRY.fail('updating queue'))
   }
 }
 
