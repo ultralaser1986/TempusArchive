@@ -68,7 +68,7 @@ async function main (ids, opts) {
 
     let id = ids[i]
 
-    let rec = await modules.fetch(id)
+    let rec = await modules.fetch(id).catch(e => null)
 
     if (!rec) {
       console.log(`Record ${id} not found! Skipping...`)
