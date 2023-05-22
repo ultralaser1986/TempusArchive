@@ -122,13 +122,14 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   }), RETRY.fail('updating metadata'), RETRY.del(vid))
 
   // add captions to video
-  if (util.exists(rec.velo)) {
+  let velo = util.join(rec.dir, rec.files.velo)
+
+  if (util.exists(velo)) {
     // captions over 13min~ wont have styling
     // captions over 1h50min~ break, so we half their fps
     // captions over 3h40min~ turned completely off
     if (rec.time.duration <= cfg.caption_limit_max) {
       util.log('Generating captions...')
-      let velo = util.join(rec.dir, rec.files.velo)
       await util.retry(() => yt.addCaptions(vid, [
         captions(velo, rec, 0, 'Run Timer', captionStyle),
         captions(velo, rec, 1, 'Speedo (Horizontal)', captionStyle),
