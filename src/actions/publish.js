@@ -7,7 +7,7 @@ let RETRY = {
       console.log(`[Retry] Failed ${x}, retrying (${i + 1}/${r})... (${t / 1000}s)`)
     }
   },
-  del: async (vid) => {
+  del: vid => {
     return async e => {
       console.log('[Retry] Failed too many times! Deleting video...')
       await util.retry(() => yt.deleteVideo(vid), RETRY.fail('deleting video'), e => { throw e })
