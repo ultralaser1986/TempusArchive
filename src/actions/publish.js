@@ -84,8 +84,10 @@ program
       if (!opts.keep) {
         let [, id] = item.description.match(/records\/(\d+)\/(\d+)/)
         let rec = await modules.read(util.join(cfg.output, id), cfg.tmp, { json: true })
-        let { count, bytes } = await modules.sweep(rec)
-        if (count) console.log(`Cleaned ${count} file${util.s(count)} (${util.formatBytes(bytes)}) from disk.`)
+        if (rec) {
+          let { count, bytes } = await modules.sweep(rec)
+          if (count) console.log(`Cleaned ${count} file${util.s(count)} (${util.formatBytes(bytes)}) from disk.`)
+        }
       }
     }
     util.log(`[${items.length}/${items.length}] Done!\n`)
