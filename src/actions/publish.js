@@ -1,4 +1,4 @@
-/* global program, cfg, util, modules, yt */
+/* global program, cfg, util, modules, yt, stores */
 
 let RETRY = {
   fail: x => {
@@ -48,7 +48,7 @@ program
 
       let vid = item.videoId
 
-      util.log(`[${i + 1}/${items.length}] Checking ${vid}`)
+      console.log(`[${i + 1}/${items.length}] Publishing ${vid}...`)
 
       let tags = item.tags.map(x => x.value)
 
@@ -73,24 +73,27 @@ program
       }), RETRY.fail('updating metadata'), e => { throw e }) // can also RETRY.del(vid) here but for now we just throw error
 
       if (override) {
-        console.log(`[DEBUGLOG] Updating metadata of old video... (${override})`)
-
+        console.log(`Updating metadata of old video... (${override})`)
         await util.retry(() => yt.updateVideo(override, {
           privacyState: { newPrivacy: 'UNLISTED' },
           addToPlaylist: { deleteFromPlaylistIds: [playlist] }
         }), RETRY.fail(`updating metadata of old record (${override})`), e => { throw e })
       }
 
+      let tfclass = item.title.match(/^\[(\w)\]/)
+      let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
+      let key = `${tfclass[1]}_${zone}`
+
+      stores.uploads.add(key, record, vid) // remove pending tag
+
       if (!opts.keep) {
-        let [, id] = item.description.match(/records\/(\d+)\/(\d+)/)
-        let rec = await modules.read(util.join(cfg.output, id), cfg.tmp, { json: true })
+        let rec = await modules.read(util.join(cfg.output, record), cfg.tmp, { json: true })
         if (rec) {
           let { count, bytes } = await modules.sweep(rec)
           if (count) console.log(`Cleaned ${count} file${util.s(count)} (${util.formatBytes(bytes)}) from disk.`)
         }
       }
     }
-    util.log(`[${items.length}/${items.length}] Done!\n`)
   })
 
 program

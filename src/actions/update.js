@@ -129,11 +129,6 @@ async function uploads (verbose) {
     util.log(`[Uploads] Fetching videos... ${total}`)
 
     for (let item of res.items) {
-      if (item.title[0] === cfg.prefix.pending) {
-        status.pending.push(item.videoId)
-        continue
-      }
-
       if (item.title[0] === cfg.prefix.hidden) {
         status.hidden.push(item.videoId)
         continue
@@ -142,6 +137,12 @@ async function uploads (verbose) {
       if (item.title[0] === cfg.prefix.wiped) {
         status.wipes.push(item.videoId)
         continue
+      }
+
+      if (item.title[0] === cfg.prefix.pending) {
+        status.pending.push(item.videoId)
+        item.title = item.title.slice(1).trim()
+        item.videoId = '#' + item.videoId
       }
 
       let tfclass = item.title.match(/^\[(\w)\]/)
@@ -163,10 +164,9 @@ async function uploads (verbose) {
   util.log('[Uploads] Parsing videos...')
 
   for (let key in uploads) {
-    let ups = Object.values(uploads[key])
+    let ups = Object.values(uploads[key]).filter(x => !x.startsWith('#'))
     for (let i = 0; i < ups.length; i++) {
       let vid = ups[i]
-      if (!info[vid]) console.log({ vid })
       let { title, privacy, description } = info[vid]
 
       // verify privacy status

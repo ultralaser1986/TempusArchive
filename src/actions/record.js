@@ -124,6 +124,7 @@ async function remaining () {
     for (let id in record) {
       if (!record[id]) break // skip if demo not available
       if (stores.uploads[zone]?.[id]) break // skip if record already uploaded
+      if (stores.uploads[zone]?.['#' + id]) break // skip if record already uploaded as pending
       // if (await modules.read(util.join(cfg.output, id), null, { check: true, json: true })) break // skip if record exists on disk
       if (options({ id }).skip && ++skips) break // skip if record is marked skip in overrides
       remaining.push(id)

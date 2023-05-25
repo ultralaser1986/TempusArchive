@@ -143,7 +143,7 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   // update uploads.list
   if (!hidden) {
     util.log('Adding to database...')
-    stores.uploads.add(rec.key, rec.id, vid)
+    stores.uploads.add(rec.key, rec.id, '#' + vid)
     stores.uploads.export(cfg.uploads)
   }
 
