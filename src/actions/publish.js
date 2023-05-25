@@ -64,27 +64,28 @@ program
 
       let title = item.title.replace(/^(. )?/, '')
 
-      console.log(`Updating metadata of video... (${vid})`)
+      console.log(`Updating metadata of record... (${vid})`)
       await util.retry(() => yt.updateVideo(vid, {
         title: { newTitle: title },
         tags: { newTags: tags },
         privacyState: { newPrivacy: visibility },
         addToPlaylist: { addToPlaylistIds: [playlist] }
-      }), RETRY.fail('updating metadata'), e => { throw e }) // can also RETRY.del(vid) here but for now we just throw error
+      }), RETRY.fail('updating metadata of record'), e => { throw e }) // can also RETRY.del(vid) here but for now we just throw error
 
       if (override) {
-        console.log(`Updating metadata of old video... (${override})`)
+        console.log(`Updating metadata of previous record... (${override})`)
         await util.retry(() => yt.updateVideo(override, {
           privacyState: { newPrivacy: 'UNLISTED' },
           addToPlaylist: { deleteFromPlaylistIds: [playlist] }
-        }), RETRY.fail(`updating metadata of old record (${override})`), e => { throw e })
+        }), RETRY.fail(`updating metadata of previous record (${override})`), e => { throw e })
       }
 
-      let tfclass = item.title.match(/^\[(\w)\]/)
+      let tfclass = item.title.match(new RegExp(`^\\${cfg.prefix.pending} \\[(\\w)]`))
       let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
       let key = `${tfclass[1]}_${zone}`
 
       stores.uploads.add(key, record, vid) // remove pending tag
+      stores.uploads.export()
 
       if (!opts.keep) {
         let rec = await modules.read(util.join(cfg.output, record), cfg.tmp, { json: true })
