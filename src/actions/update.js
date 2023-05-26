@@ -92,7 +92,7 @@ async function records (full) {
 
       if (!stores.records[key] || !stores.records[key][id]) { // only update if record is missing / has no demo
         util.log(`[Records] ${i + 1}/${wrs.length} - ${rec.map_info.name} [${rec.zone_info.type} ${rec.zone_info.zoneindex}]`)
-        let r = await modules.fetch(id, true).catch(() => null)
+        let r = await modules.fetch(id, { minimal: true }).catch(() => null)
         if (!r) {
           demoless++
           continue
