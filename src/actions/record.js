@@ -79,6 +79,11 @@ async function main (ids, opts) {
 
     console.log(`${MEDAL} ${i + 1}/${ids.length} ${((i + 1) / ids.length * 100).toFixed(2)}% << (${id}): "${modules.display(rec)}"`)
 
+    if (!rec.demo.url) {
+      console.log(`Record ${id} does not have a demo! Skipping...`)
+      continue
+    }
+
     let video = util.join(cfg.output, id + '.mp4')
     if (await modules.read(video, null, { check: true })) console.log('Record found on disk!')
     else {
