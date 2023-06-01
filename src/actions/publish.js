@@ -27,6 +27,8 @@ program
     let items = []
     let next = null
 
+    await yt.updateSession()
+
     do {
       let res = await yt.listVideos(null, { filter, mask }, next)
 
