@@ -85,8 +85,10 @@ async function main (ids, opts) {
     }
 
     let video = util.join(cfg.output, id + '.mp4')
-    if (await modules.read(video, null, { check: true })) console.log('Record found on disk!')
-    else {
+    if (await modules.read(video, null, { check: true })) {
+      console.log('Record found on disk!')
+      video = null
+    } else {
       video = await record(rec).catch(e => { return { error: e } })
       if (video.error !== undefined) {
         switch (video.error) {
@@ -100,8 +102,10 @@ async function main (ids, opts) {
       }
     }
 
-    time += rec.time.duration
-    size += util.size(video, true)
+    if (video) {
+      time += rec.time.duration
+      size += util.size(video, true)
+    }
 
     if (opts.pack) {
       let files = Object.values(rec.files).map(x => util.join(cfg.output, x))
