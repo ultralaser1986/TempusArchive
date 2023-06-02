@@ -47,6 +47,8 @@ async function pack (files, pack, opts = {}) {
 }
 
 async function unpack (pack, out, opts = {}) {
+  util.mkdir(out)
+
   pack = util.resolve(pack)
   if (util.basename(pack).indexOf('.') === -1) pack += '.' + (opts.ext || EXT)
 

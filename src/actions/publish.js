@@ -90,7 +90,6 @@ program
       stores.uploads.export()
 
       if (!opts.keep) {
-        util.mkdir(cfg.tmp)
         let rec = await modules.read(util.join(cfg.output, record), cfg.tmp, { json: true })
         if (rec) {
           let { count, bytes } = await modules.sweep(rec)

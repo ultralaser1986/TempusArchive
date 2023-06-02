@@ -33,8 +33,6 @@ async function main (ids, opts) {
     if (!queue) return console.info('No items in queue!')
   }
 
-  util.mkdir(cfg.tmp)
-
   let i = 0
   let max = ids.length
 
