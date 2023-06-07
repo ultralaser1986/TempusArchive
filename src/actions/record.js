@@ -105,15 +105,15 @@ async function main (ids, opts) {
     if (video) {
       time += rec.time.duration
       size += util.size(video, true)
+
+      if (opts.pack) {
+        let files = Object.values(rec.files).map(x => util.join(cfg.output, x))
+        let out = util.join(cfg.output, rec.id.toString())
+        await modules.pack(files, out, { delete: true })
+
+        console.log(`${MEDAL} (${id}) >> ${out}`)
+      } else console.log(`${MEDAL} (${id}) >> ${Object.values(rec.files).join(' ')}`)
     }
-
-    if (opts.pack) {
-      let files = Object.values(rec.files).map(x => util.join(cfg.output, x))
-      let out = util.join(cfg.output, rec.id.toString())
-      await modules.pack(files, out, { delete: true })
-
-      console.log(`${MEDAL} (${id}) >> ${out}`)
-    } else console.log(`${MEDAL} (${id}) >> ${Object.values(rec.files).join(' ')}`)
 
     if (opts.run) await modules.upload([id], opts)
     else if (!opts.standalone) await modules.queue.add(id)
