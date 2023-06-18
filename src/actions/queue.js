@@ -22,7 +22,7 @@ let queue = {
   async add (data) {
     data = data.toString()
 
-    if (!util.exists(cfg.queue)) await this.update('')
+    if (!util.exists(cfg.queue)) await this.update([])
 
     let list = await this.list()
 
