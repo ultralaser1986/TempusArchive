@@ -21,7 +21,7 @@
     "caption_limit_max": 13200,
     "caption_limit_style": 50000,
     "zones": ["map", "course", "bonus", "trick"],
-    "unlisted": ["map"],
+    "unlisted": [],
     "padding": 200,
     "pre": 300,
     "meta": {
