@@ -12,7 +12,7 @@ program
   .command('queue')
   .description('view items in queue')
   .action(async () => {
-    let items = queue.list()
+    let items = await queue.list()
     if (!items.length) return console.log('No items in queue!')
 
     for (let i = 0; i < items.length; i++) console.log(i, items[i])
