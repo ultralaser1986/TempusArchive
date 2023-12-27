@@ -111,7 +111,7 @@ async function main (ids, opts) {
         let out = util.join(cfg.output, rec.id.toString())
         await modules.pack(files, out, { delete: true })
 
-        console.log(`${MEDAL} (${id}) >> ${out}`)
+        console.log(`${MEDAL} (${id}) >> ${id}.rec`)
       } else console.log(`${MEDAL} (${id}) >> ${Object.values(rec.files).join(' ')}`)
     }
 
