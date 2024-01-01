@@ -1,4 +1,4 @@
-/* global program, modules, cfg, util */
+/* global program, modules */
 
 program
   .command('run')
