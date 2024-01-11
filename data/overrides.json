@@ -21,11 +21,11 @@
         "override": { "cmd": "r_renderoverlayfragment 0" }
     },
     {
-        "maps": [ "jump_daeva, jump_ice_v4"],
+        "maps": [ "jump_daeva", "jump_ice_v4"],
         "override": { "cmd": "mat_softwareskin 0" }
     },
     {
-        "maps": [ "jump_sketchy2_rc1_zip, jump_ice_v4"],
+        "maps": [ "jump_sketchy2_rc1_zip", "jump_ice_v4"],
         "override": { "cmd": "r_lod 2" }
     }
 ]
