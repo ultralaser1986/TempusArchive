@@ -107,6 +107,31 @@ program
 
     let report = JSON.parse(util.read(cfg.report, 'utf-8'))
 
+    // fix nicks
+    if (report.nicks) {
+      let items = Object.keys(report.nicks)
+      if (items.length) {
+        let res = await yt.listVideos(items)
+        for (let i = 0; i < res.items.length; i++) {
+          let item = res.items[i]
+          let rep = report.nicks[item.videoId]
+
+          util.log(`[reportfix] Updating nicks ${i + 1}/${res.items.length} (${item.videoId})`)
+
+          let title = item.title
+
+          console.log('\n' + title)
+          title = title.replace(rep[0], rep[1])
+          console.log(title)
+
+          await util.retry(() => yt.updateVideo(item.videoId, {
+            title: { newTitle: title }
+          }), RETRY.fail('updating nick'), e => { throw e })
+        }
+        util.log(`[reportfix] Updated ${res.items.length} nicks!\n`)
+      }
+    }
+
     // fix privacy
     for (let privacy in report.privacy) {
       let items = report.privacy[privacy]

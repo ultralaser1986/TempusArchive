@@ -113,7 +113,7 @@ async function records (full) {
 
 async function uploads (verbose) {
   let uploads = new ListStore()
-  let status = { pending: [], hidden: [], wipes: [], dupes: [], privacy: { public: [], unlisted: [] }, update: {} }
+  let status = { pending: [], hidden: [], wipes: [], dupes: [], unnamed: [], privacy: { public: [], unlisted: [] }, update: {}, nicks: {} }
   let info = {}
 
   util.log('[Uploads] Fetching videos...')
@@ -145,6 +145,8 @@ async function uploads (verbose) {
         item.videoId = '#' + item.videoId
       }
 
+      if (item.privacy === 'VIDEO_PRIVACY_PRIVATE' && item.description === '') continue // probably in the middle of an upload
+
       let tfclass = item.title.match(/^\[(\w)\]/)
       if (!tfclass) throw Error(`Video ${item.videoId} has invalid title: ${item.title}`)
 
@@ -167,7 +169,17 @@ async function uploads (verbose) {
     let ups = Object.values(uploads[key]).filter(x => !x.startsWith('#'))
     for (let i = 0; i < ups.length; i++) {
       let vid = ups[i]
-      let { privacy, description } = info[vid]
+      let { privacy, description, title } = info[vid]
+
+      // verify player nick
+      if (cfg.check_nicks) {
+        let name = title.match(/] (.*?) on/)[1]
+        let steam = util.formatSteamID(description.match(/profiles\/(.*?)\s/)[1])
+        let nick = Object.keys(stores.players[steam] || {})[0]
+
+        if (!nick) status.unnamed.push([steam, name])
+        else if (name !== nick) status.nicks[vid] = [name, nick]
+      }
 
       // verify privacy status
       if (i === ups.length - 1) {
@@ -190,13 +202,17 @@ async function uploads (verbose) {
   util.removeEmpty(status)
 
   util.log('')
+
   if (status.dupes) console.log('Delete Duplicate Videos:', status.dupes)
   if (status.privacy) console.log('Change Video Privacy:', status.privacy)
   if (status.update) console.log('Change Description Chain Id:', status.update)
+  if (status.nicks) console.log('Change Title Nicks:', status.nicks)
+
   if (verbose) {
     if (status.pending) console.log('Pending Records:', status.pending)
     if (status.hidden) console.log('Hidden Records:', status.hidden)
     if (status.wipes) console.log('Wiped Records:', status.wipes)
+    if (status.unnamed) console.log('Unnamed Players:', status.unnamed)
   }
 
   util.log(`[Uploads] Processed ${Object.keys(uploads).length} videos! (Pending ${status.pending?.length || 0}, Hidden ${status.hidden?.length || 0}, Wiped ${status.wipes?.length || 0})\n`)

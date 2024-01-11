@@ -35,6 +35,7 @@
         "wiped": "?"
     },
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
+    "check_nicks": false,
     "state": "data/STATE",
     "queue": "data/QUEUE",
     "bulk": "data/bulk.json",
