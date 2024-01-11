@@ -131,8 +131,8 @@ module.exports = {
     }
 
     if (!isNaN(id)) {
-      let uni = BigInt(id % 2 !== 0)
-      return 'STEAM_0:' + uni + ':' + ((BigInt(id) - STEAM_BASE + uni) / 2n)
+      let uni = (BigInt(id) - STEAM_BASE) % 2n
+      return 'STEAM_0:' + uni + ':' + ((BigInt(id) - STEAM_BASE - uni) / 2n)
     }
 
     return null
