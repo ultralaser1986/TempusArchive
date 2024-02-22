@@ -20,7 +20,7 @@ async function getSessionRisk (keys) {
       if (data) {
         try {
           data = JSON.parse(data).context?.request?.sessionInfo?.token
-          if (data) resolve(data)
+          if (data && data.length > 25) resolve(data)
         } catch (e) { }
       }
     })
