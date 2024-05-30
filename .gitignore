@@ -10,6 +10,8 @@ data/QUEUE
 /data/bulk.json
 /data/demos
 /bin/thumbview/thumbview.html
+/svr
+/data/SVR_LOG.txt
 
 !players.list
 !/data/keys_example.json
