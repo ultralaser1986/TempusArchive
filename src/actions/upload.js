@@ -71,7 +71,7 @@ async function main (ids, opts) {
   }
 
   // only clean files if we executed this file with specific ids or run mode is enabled
-  if (!queue || opts.run) modules.clean()
+  if (!queue || opts.run) util.remove(cfg.tmp)
 }
 
 async function upload (rec, captionStyle = 'default', hidden = false) {
