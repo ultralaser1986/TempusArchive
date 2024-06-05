@@ -12,8 +12,8 @@ program
 function clean (full) {
   util.remove([cfg.tmp, cfg.state, cfg.velo, cfg.bulk, cfg.report, tr.game?.tmp])
   if (full) {
-    let log = tr.game ? util.join(tr.game.dir, tr.game.log) : null
-    util.remove([cfg.output, cfg.queue, log])
+    try { util.remove(tr.game?.tmpRoot) } catch (e) {} // can fail cuz of console.log still open
+    util.remove([cfg.output, cfg.queue])
     util.mkdir(cfg.output)
   }
 }
