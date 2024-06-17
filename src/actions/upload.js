@@ -78,7 +78,10 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   await yt.updateSession()
 
   let override = stores.uploads[rec.key]
-  if (override) override = Object.values(override).at(-1) // assuming the last key is the latest record
+  if (override) {
+    override = Object.values(override).at(-1) // assuming the last key is the latest record
+    if (override[0] === '#') override = override.slice(1)
+  }
   if (hidden) override = null
 
   // upload video as draft
