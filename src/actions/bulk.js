@@ -57,7 +57,7 @@ program
           if (vid === stores.uploads[zone][id]) {
             delete stores.uploads[zone][id]
             if (!Object.keys(stores.uploads[zone]).length) delete stores.uploads[zone]
-            stores.uploads.export()
+            await stores.uploads.export()
             break
           }
         }
@@ -115,7 +115,7 @@ program
           if (vid === stores.uploads[zone][id]) {
             delete stores.uploads[zone][id]
             if (!Object.keys(stores.uploads[zone]).length) delete stores.uploads[zone]
-            stores.uploads.export()
+            await stores.uploads.export()
             break
           }
         }

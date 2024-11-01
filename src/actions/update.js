@@ -38,7 +38,7 @@ async function players () {
   }
   util.log(`[Players] Added ${num} additional nickname${util.s(num)}! (${Object.keys(stores.players).length} total)\n`)
 
-  stores.players.export(cfg.players)
+  await stores.players.export(cfg.players)
 }
 
 async function records (full) {
@@ -76,7 +76,7 @@ async function records (full) {
     }
     util.log(`[Records] Fetched ${count} record${util.s(count)}!\n`)
 
-    records.export(cfg.records)
+    await records.export(cfg.records)
     stores.records = records
   } else {
     let activity = await tempus.getActivity()
@@ -107,7 +107,7 @@ async function records (full) {
     util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo)\n`)
     if (updated + demoless === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
 
-    stores.records.export(cfg.records)
+    await stores.records.export(cfg.records)
   }
 }
 
@@ -166,6 +166,7 @@ async function uploads (verbose) {
   util.log('[Uploads] Parsing videos...')
 
   for (let key in uploads) {
+    console.log({ key })
     let ups = Object.values(uploads[key]).filter(x => !x.startsWith('#'))
     for (let i = 0; i < ups.length; i++) {
       let vid = ups[i]

@@ -87,7 +87,7 @@ program
       let key = `${tfclass[1]}_${zone}`
 
       stores.uploads.add(key, record, vid) // remove pending tag
-      stores.uploads.export()
+      await stores.uploads.export()
 
       if (!opts.keep) {
         let rec = await modules.read(util.join(cfg.output, record), cfg.tmp, { json: true })

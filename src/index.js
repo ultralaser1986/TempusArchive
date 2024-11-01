@@ -3,14 +3,15 @@ process.chdir(require('path').dirname(__dirname))
 
 let { program } = require('commander')
 
+let util = require('./util')
+let cfg = require('../data/config.json')
+
 let TemRec = require('temrec')
 let YouTube = require('./lib/YouTube')
+
 let ListStore = require('./lib/ListStore')
 ListStore.setValueSwaps([undefined, true], ['X', false])
-
-let util = require('./util')
-
-let cfg = require('../data/config.json')
+ListStore.setRemote(cfg.github)
 
 let overrides = require(util.join('..', cfg.overrides))
 
@@ -19,24 +20,31 @@ let tr = new TemRec(cfg.temrec, true)
 tr.tmp = cfg.tmp
 
 let stores = {
-  players: new ListStore(cfg.players),
-  records: new ListStore(cfg.records),
-  uploads: new ListStore(cfg.uploads)
+  players: new ListStore(),
+  records: new ListStore(),
+  uploads: new ListStore()
 }
 
-util.globals({ ListStore, program, util, cfg, overrides, yt, tr, stores })
+main()
+async function main () {
+  await stores.players.import(cfg.players)
+  await stores.records.import(cfg.records)
+  await stores.uploads.import(cfg.uploads)
 
-let modules = []
-let act = util.resolve('src/actions')
-util.read(act).forEach(a => {
-  let mod = require(util.join(act, a))
-  if (mod) modules = { ...modules, ...mod }
-})
-util.globals({ modules })
+  util.globals({ ListStore, program, util, cfg, overrides, yt, tr, stores })
 
-program
-  .name('tempusarchive')
-  .parse()
+  let modules = []
+  let act = util.resolve('src/actions')
+  util.read(act).forEach(a => {
+    let mod = require(util.join(act, a))
+    if (mod) modules = { ...modules, ...mod }
+  })
+  util.globals({ modules })
+
+  program
+    .name('tempusarchive')
+    .parse()
+}
 
 for (let killer of ['SIGINT', 'SIGTERM', 'SIGQUIT']) process.on(killer, () => exit().then(() => process.exit(1)))
 async function exit () {

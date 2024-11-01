@@ -145,7 +145,7 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   if (!hidden) {
     util.log('Adding to database...')
     stores.uploads.add(rec.key, rec.id, '#' + vid)
-    stores.uploads.export(cfg.uploads)
+    await stores.uploads.export(cfg.uploads)
   }
 
   return vid
