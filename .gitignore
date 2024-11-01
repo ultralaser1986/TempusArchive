@@ -1,7 +1,7 @@
 **/node_modules
 /data/output
 /data/tmp
-/data/keys*.json
+/secrets/*.json
 /data/*.list
 sound.cache
 data/STATE
@@ -14,4 +14,4 @@ data/QUEUE
 /data/SVR_LOG.txt
 
 !players.list
-!/data/keys_example.json
+!/secrets/*_example.json

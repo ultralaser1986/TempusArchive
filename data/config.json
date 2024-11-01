@@ -1,6 +1,7 @@
 {
     "temrec": "data/archive.ini",
-    "youtube": "data/keys.json",
+    "youtube": "secrets/youtube.json",
+    "github": "secrets/github.json",
     "players": "data/players.list",
     "records": "data/records.list",
     "uploads": "data/uploads.list",
