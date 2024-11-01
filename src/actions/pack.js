@@ -34,7 +34,7 @@ program
     if (!util.exists(pack)) return console.error(`File "${pack}" does not exist!`)
 
     await unpack(pack, cfg.output, { delete: true })
-    console.log(`Record unpacked to: ${cfg.output}/${id}.*`)
+    console.log(`Record unpacked to: ${util.resolve(cfg.output)}\\${id}.*`)
   })
 
 async function pack (files, pack, opts = {}) {
