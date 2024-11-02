@@ -7,6 +7,20 @@ let ERROR = {
 }
 
 program
+  .command('remaining')
+  .description('view remaining records yet to be recorded')
+  .action(async () => {
+    let rem = await remaining()
+    console.log(`${rem.items.length} records remaining! ${rem.skips} skipped!`)
+    for (let i = 0; i < rem.items.length; i++) {
+      let id = rem.items[i]
+      let rec = await modules.fetch(id).catch(e => null)
+      if (!rec) console.log(`[${id}] Record not found.`)
+      else console.log(`[${id}] ${i + 1}/${rem.items.length} ${modules.display(rec)}`)
+    }
+  })
+
+program
   .command('record')
   .description('render records')
   .argument('[ids...]', 'list of record ids to be rendered, otherwise renders all remaining ones')
