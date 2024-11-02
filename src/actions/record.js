@@ -158,7 +158,7 @@ async function remaining () {
 async function record (rec, endingStyle = 'default', splitStyle = 'default') {
   util.mkdir(cfg.tmp)
 
-  let end = ending(rec.time.duration, rec.time.diff, endingStyle, cfg.tmp)
+  let end = ending(util.fixTickDuration(rec.time.duration), util.fixTickDuration(rec.time.diff), endingStyle, cfg.tmp)
   if (rec.splits) end.subs = merge(end.subs, splits(rec.splits, splitStyle, cfg.tmp))
 
   // video

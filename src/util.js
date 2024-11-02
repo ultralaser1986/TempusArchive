@@ -190,5 +190,12 @@ module.exports = {
   },
   s: n => {
     return n === 1 ? '' : 's'
+  },
+  fixTickDuration (duration) {
+    if (duration < 0) return -this.fixTickDuration(-duration)
+    if (Math.abs(Math.round(duration * 200 / 3) * 3 / 200 - duration) <= duration * 2 ** -19) {
+      duration = Math.round(duration * 200 / 3) * 3 / 200
+    }
+    return duration + 1e-9 // to avoid printing .999999
   }
 }

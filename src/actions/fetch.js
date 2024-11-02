@@ -116,7 +116,9 @@ function display (rec) {
 
   let title = `[${rec.class}] ${rec.player.nick || rec.player.name} on ${rec.map} ${type}`.trim()
   if (custom) title += ` (${util.maxLen(custom, 30)})`
-  title += ` - ${util.formatTime(rec.time.duration * 1000)}`
+
+  let time = util.fixTickDuration(rec.time.duration)
+  title += ` - ${util.formatTime(time * 1000)}`
 
   return title
 }
