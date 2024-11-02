@@ -4,6 +4,10 @@
         "override": { "skip": true }
     },
     {
+        "records": [ 4356267, 4356316, 4446840, 4635141, 4667223, 4848443, 4944604, 4962275, 5580406 ],
+        "override": { "skip": true }
+    },
+    {
         "zones": [ 10988 ],
         "maps": [ "jump_fear_redo", "jump_flashblack", "jump_gman_beta_4", "jump_housebeta", "jump_karb_b3", "jump_noob2_ab", "jump_purecio_b2", "jump_wallclimb_v1alpha", "jump_unclesam" ],
         "override": { "cmd": "mat_fullbright 1", "ffmpeg": { "curves": "data/curves_fullbright.acv" } }
