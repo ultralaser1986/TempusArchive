@@ -47,10 +47,6 @@ async function main (ids, opts) {
       opts = state.opts
     }
   } else {
-    if (!ids.length && Date.now() - util.date(cfg.records) >= cfg.record_update_wait) {
-      console.log(`${cfg.records} is older than a day!`)
-    }
-
     if (!ids.length) {
       let rem = await remaining()
       ids = rem.items
