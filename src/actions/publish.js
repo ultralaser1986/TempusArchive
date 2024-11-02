@@ -17,29 +17,22 @@ let RETRY = {
 }
 
 program
+  .command('pending')
+  .description('view pending uploads yet to be uploaded')
+  .action(async () => {
+    let pen = await pending()
+    for (let i = 0; i < pen.length; i++) {
+      let vid = pen[i]
+      console.log(`${i + 1}/${pen.length} ${vid.title}`)
+    }
+  })
+
+program
   .command('publish')
   .option('-k, --keep', 'keep files after publish', false)
   .description('check and publish videos that are ready')
   .action(async opts => {
-    let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PRIVATE' } }
-    let mask = { videoResolutions: { all: true }, tags: { all: true } }
-
-    let items = []
-    let next = null
-
-    await yt.updateSession()
-
-    do {
-      let res = await yt.listVideos(null, { filter, mask }, next)
-
-      let vids = res.items.filter(x => x.videoResolutions?.statusSd === 'RESOLUTION_STATUS_DONE' && x.title.startsWith(cfg.prefix.pending))
-      items.push(...vids)
-      util.log(`Fetching videos... ${items.length}`)
-
-      next = res.next
-    } while (next)
-
-    util.log(`Fetched ${items.length} videos!\n`)
+    let items = await pending()
 
     items = items.reverse() // important, avoids having to check overrides recursively
 
@@ -177,3 +170,25 @@ program
 
     util.remove(cfg.report)
   })
+
+async function pending () {
+  let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PRIVATE' } }
+  let mask = { videoResolutions: { all: true }, tags: { all: true } }
+
+  let items = []
+  let next = null
+
+  do {
+    let res = await yt.listVideos(null, { filter, mask }, next)
+
+    let vids = res.items.filter(x => x.videoResolutions?.statusSd === 'RESOLUTION_STATUS_DONE' && x.title.startsWith(cfg.prefix.pending))
+    items.push(...vids)
+    util.log(`Fetching videos... ${items.length}`)
+
+    next = res.next
+  } while (next)
+
+  util.log(`Fetched ${items.length} videos!\n`)
+
+  return items
+}
