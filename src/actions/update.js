@@ -166,7 +166,6 @@ async function uploads (verbose) {
   util.log('[Uploads] Parsing videos...')
 
   for (let key in uploads) {
-    console.log({ key })
     let ups = Object.values(uploads[key]).filter(x => !x.startsWith('#'))
     for (let i = 0; i < ups.length; i++) {
       let vid = ups[i]
