@@ -23,7 +23,7 @@ program
     let pen = await pending()
     for (let i = 0; i < pen.length; i++) {
       let vid = pen[i]
-      console.log(`${i + 1}/${pen.length} ${vid.title}`)
+      console.log(`[${vid.videoId}] ${i + 1}/${pen.length} ${vid.title}`)
     }
   })
 
