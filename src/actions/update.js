@@ -54,20 +54,24 @@ async function records (full) {
       for (let zone of cfg.zones) {
         let zones = map.zone_counts[zone]
         for (let j = 0; j < zones; j++) {
-          let rec = await tempus.getMapRecords(map.id, zone, j + 1, 1)
-          let s = rec.results.soldier[0]
-          let d = rec.results.demoman[0]
-          if (s) {
-            let z = `S_${rec.zone_info.id}`
-            delete records[z]
-            records.add(z, s.id, !!s.demo_info?.url)
-            count++
-          }
-          if (d) {
-            let z = `D_${rec.zone_info.id}`
-            delete records[z]
-            records.add(z, d.id, !!d.demo_info?.url)
-            count++
+          let rec = await tempus.getMapRecords(map.id, zone, j + 1, 100)
+          for (let tfclass of ['soldier', 'demoman']) {
+            let wr = rec.results[tfclass][0]
+
+            if (wr) {
+              // return oldest wr if tie
+              for (let i = 1; i < rec.results[tfclass].length; i++) {
+                let result = rec.results[tfclass][i]
+                if (result.duration === wr.duration && result.date < wr.date) {
+                  wr = result
+                }
+              }
+
+              let z = `${tfclass[0].toUpperCase()}_${rec.zone_info.id}`
+              delete records[z]
+              records.add(z, wr.id, !!wr.demo_info?.url)
+              count++
+            }
           }
 
           util.log(`[Records] ${i + 1}/${maps.length} - ${map.name} [${zone} ${j + 1}] (${j + 1}/${zones})`)
