@@ -11,7 +11,7 @@ let YouTube = require('./lib/YouTube')
 
 let ListStore = require('./lib/ListStore')
 ListStore.setValueSwaps([undefined, true], ['X', false])
-ListStore.setRemote(cfg.github)
+if (cfg.remote_list) ListStore.setRemote(cfg.github)
 
 let overrides = require(util.join('..', cfg.overrides))
 

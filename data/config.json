@@ -17,7 +17,7 @@
     "sfx": "sfx.wav",
     "caps": "caps.ytt",
     "curves": "data/curves.acv",
-    "record_update_wait":  72000000,
+    "remote_list": true,
     "caption_limit_reduced": 6600,
     "caption_limit_max": 13200,
     "caption_limit_style": 50000,
