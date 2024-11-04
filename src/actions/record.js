@@ -257,8 +257,8 @@ function splits (splits, style, out) {
   for (let i = 0; i < splits.length; i++) {
     let split = splits[i]
     let name = split.zone.type[0].toUpperCase() + split.zone.type.slice(1) + ' ' + split.zone.index
-    let time = split.time.duration
-    let diff = split.time.diff
+    let time = util.fixTickDuration(split.time.duration)
+    let diff = util.fixTickDuration(split.time.diff)
 
     let primary = util.formatTime(time * 1000)
     let secondary = util.formatTime(diff * 1000, Math.abs(diff) < 0.001 ? 4 : 3) || ''
