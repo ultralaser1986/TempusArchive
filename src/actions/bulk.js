@@ -44,7 +44,7 @@ program
       let title = item.title.replace(/^(. )?/, cfg.prefix.wiped + ' ')
 
       let pls = Object.values(cfg.playlist)
-      pls = pls.splice(pls.indexOf(cfg.playlist.wiped), 1)
+      pls.splice(pls.indexOf(cfg.playlist.wiped), 1)
 
       await util.retry(() => yt.updateVideo(vid, {
         privacyState: { newPrivacy: 'UNLISTED' },
