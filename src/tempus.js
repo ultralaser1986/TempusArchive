@@ -37,6 +37,10 @@ module.exports = {
       case 4: return 'Hard'
       case 5: return 'Very Hard'
       case 6: return 'Insane'
+      case 7: return 'Merciless'
+      case 8: return 'Ultra-Violence'
+      case 9: return 'Nightmare'
+      case 10: return 'Extra Crispy'
     }
     return 'Unknown'
   },
