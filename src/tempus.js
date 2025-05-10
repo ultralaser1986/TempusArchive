@@ -1,23 +1,49 @@
-let dp = require('despair')
-
 let API_URL = 'https://tempus2.xyz/api/v0'
 let TFCLASS = { 3: 'soldier', 4: 'demoman' }
 
+async function retry (url) {
+  let res = await fetch(url).catch(async e => {
+    console.error(e)
+    console.error('Error fetching tempus API! Retrying...')
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return null
+  })
+
+  if (!res) return await retry(url)
+
+  if (res.status === 429) {
+    let delaySeconds = Number(res.headers.get('retry-after'))
+    await new Promise(resolve => setTimeout(resolve, 1000 * delaySeconds))
+    return await retry(url)
+  }
+
+  if (res.status === 404) {
+    return null
+  }
+
+  return await res.json()
+}
+
 module.exports = {
   async getRecordOverview (id) {
-    return await dp(API_URL + `/records/id/${id}/overview`).json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + `/records/id/${id}/overview`)
   },
   async getActivity () {
-    return await dp(API_URL + '/activity').json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + '/activity')
   },
   async getMapList () {
-    return await dp(API_URL + '/maps/detailedList').json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + '/maps/detailedList')
   },
   async getMapRecords (id, zone, index, limit = 1) {
-    return await dp(API_URL + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`).json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`)
   },
   async getZoneRecords (id, limit = 1) {
-    return await dp(API_URL + `/zones/id/${id}/records/list?limit=${limit}`).json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + `/zones/id/${id}/records/list?limit=${limit}`)
   },
   async getDiffFromRecord (rec) {
     let c = TFCLASS[rec.record_info.class]
@@ -26,7 +52,8 @@ module.exports = {
     return w ? (rec.record_info.duration - w.duration) : null
   },
   async getMapWRS (map) {
-    return await dp(API_URL + `/maps/name/${map}/wrs`).json().catch(() => null)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return await retry(API_URL + `/maps/name/${map}/wrs`)
   },
   formatTier (tier) {
     switch (Number(tier)) {
