@@ -35,6 +35,7 @@
         "hidden": "!",
         "wiped": "?"
     },
+    "legacy_maps": ["jump_spy101_rc12"],
     "nickdata": "https://raw.githubusercontent.com/laurirasanen/TempusRecords/master/src/data/nicknames.json",
     "check_nicks": false,
     "state": "data/STATE",

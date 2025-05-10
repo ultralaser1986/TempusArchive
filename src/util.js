@@ -36,6 +36,11 @@ module.exports = {
 
     return (invert ? '-' : '') + t.join(':') + (decimals ? '.' + decs.slice(0, decimals) : '')
   },
+  msFromTime (str) {
+    let [x = '', m = 0, h = 0] = str.split(':').reverse()
+    let ms = x.split('.').join('')
+    return (((Number(h) * 60 * 60) + (Number(m) * 60)) * 1000) + Number(ms)
+  },
   maxLen (str, len) {
     if (str.length > len) str = str.slice(0, len - 3).trim() + '...'
     return str
@@ -197,5 +202,26 @@ module.exports = {
       duration = Math.round(duration * 200 / 3) * 3 / 200
     }
     return duration + 1e-9 // to avoid printing .999999
+  },
+  createOrderedObject () {
+    let order = []
+    let values = Object.create(null)
+
+    return new Proxy(values, {
+      set (target, prop, value) {
+        if (!(prop in target))order.push(prop)
+        target[prop] = value
+        return true
+      },
+      ownKeys () { return order },
+      getOwnPropertyDescriptor (target, prop) {
+        return {
+          enumerable: true,
+          configurable: true,
+          writable: true,
+          value: target[prop]
+        }
+      }
+    })
   }
 }

@@ -151,13 +151,18 @@ async function uploads (verbose) {
 
       if (item.privacy === 'VIDEO_PRIVACY_PRIVATE' && item.description === '') continue // probably in the middle of an upload
 
-      let tfclass = item.title.match(/^\[(\w)\]/)
-      if (!tfclass) throw Error(`Video ${item.videoId} has invalid title: ${item.title}`)
+      let [, tfclass] = item.title.match(/^\[(\w)\]/)
+      if (!tfclass) throw Error(`Video ${item.videoId} has invalid title (could not find tfclass): ${item.title}`)
 
       let [, record, zone] = item.description.match(/records\/(\d+)\/(\d+)/)
-      if (!record || !zone) throw Error(`Video ${item.videoId} has invalid description: ${item.title}`)
+      if (!record || !zone) throw Error(`Video ${item.videoId} has invalid description (could not find record or zone id): ${item.title}`)
+      item.record = record
 
-      let key = `${tfclass[1]}_${zone}`
+      let [, time] = item.title.match(/([\d.:]+)$/)
+      if (!time) throw Error(`Video ${item.videoId} has invalid title (could not find time): ${item.title}`)
+      item.time = util.msFromTime(time)
+
+      let key = `${tfclass}_${zone}`
 
       if (uploads[key]?.[record]) status.dupes.push(item.videoId)
       else {
@@ -167,9 +172,43 @@ async function uploads (verbose) {
     }
   } while (next)
 
+  // legacy zones
+  for (let key in uploads) {
+    let altKey = key + 'X'
+    let ups = Object.values(uploads[key])
+    for (let i = 0; i < ups.length; i++) {
+      let vid = ups[i]
+      let { title, record, videoId } = info[vid]
+
+      let map = title.match(/on (.*?) /)[1]
+      if (cfg.legacy_maps.includes(map)) {
+        uploads.add(altKey, record, videoId)
+        delete uploads[key][record]
+      }
+    }
+  }
+
+  // sort upload key values by time
+  for (let key in uploads) {
+    let ups = Object.values(uploads[key])
+    if (ups.length <= 1) continue
+    let list = []
+    for (let up of ups) list.push({ time: info[up].time, vid: up, id: info[up].record })
+    list = list.sort((a, b) => {
+      let t = b.time - a.time // shortest time
+      if (t === 0) return b.id - a.id // otherwise lower record id / earlier date
+      return t
+    })
+
+    uploads[key] = util.createOrderedObject()
+    for (let item of list) uploads[key][item.id] = item.vid
+  }
+
   util.log('[Uploads] Parsing videos...')
 
   for (let key in uploads) {
+    if (key.endsWith('X')) continue // skip legacy zones
+
     let ups = Object.values(uploads[key]).filter(x => !x.startsWith('#'))
     for (let i = 0; i < ups.length; i++) {
       let vid = ups[i]
