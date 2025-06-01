@@ -114,6 +114,8 @@ async function records (full) {
       }
     }
 
+    await yt.updateSession()
+
     let list = await yt.listVideos(Array.from(vids), null, null)
     list = list.items.reduce((cur, prev) => {
       cur[prev.videoId] = util.msFromTime(prev.title.match(/([\d.:]+)$/)[1])

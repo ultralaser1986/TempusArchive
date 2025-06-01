@@ -77,6 +77,8 @@ program
       ids = JSON.parse(util.read(cfg.bulk))
     }
 
+    await yt.updateSession()
+
     let res = await yt.listVideos(ids)
 
     for (let item of res.items) console.log(`${item.title} (${item.videoId})`)

@@ -32,6 +32,8 @@ program
   .option('-k, --keep', 'keep files after publish', false)
   .description('check and publish videos that are ready')
   .action(async opts => {
+    await yt.updateSession()
+
     let items = await pending()
 
     items = items.reverse() // important, avoids having to check overrides recursively
@@ -99,6 +101,8 @@ program
     if (!util.exists(cfg.report)) return console.log('No report.json found!')
 
     let report = JSON.parse(util.read(cfg.report, 'utf-8'))
+
+    await yt.updateSession()
 
     // fix nicks
     if (report.nicks) {
