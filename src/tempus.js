@@ -1,7 +1,16 @@
 let API_URL = 'https://tempus2.xyz/api/v0'
 let TFCLASS = { 3: 'soldier', 4: 'demoman' }
 
+let lastTime = 0
+
 async function retry (url) {
+  if (lastTime) {
+    let diff = Date.now() - lastTime
+    let wait = 1000 - diff
+    if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait))
+  }
+  lastTime = Date.now()
+
   let res = await fetch(url).catch(async e => {
     console.error(e)
     console.error('Error fetching tempus API! Retrying...')
@@ -26,23 +35,18 @@ async function retry (url) {
 
 module.exports = {
   async getRecordOverview (id) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + `/records/id/${id}/overview`)
   },
   async getActivity () {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + '/activity')
   },
   async getMapList () {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + '/maps/detailedList')
   },
   async getMapRecords (id, zone, index, limit = 1) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + `/maps/id/${id}/zones/typeindex/${zone}/${index}/records/list?limit=${limit}`)
   },
   async getZoneRecords (id, limit = 1) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + `/zones/id/${id}/records/list?limit=${limit}`)
   },
   async getDiffFromRecord (rec) {
@@ -52,7 +56,6 @@ module.exports = {
     return w ? (rec.record_info.duration - w.duration) : null
   },
   async getMapWRS (map) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
     return await retry(API_URL + `/maps/name/${map}/wrs`)
   },
   formatTier (tier) {
