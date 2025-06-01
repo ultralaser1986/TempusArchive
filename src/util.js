@@ -21,10 +21,10 @@ module.exports = {
       ms = Math.abs(ms)
     }
 
-    ms = ms / 1000
-    let s = Math.floor(ms % 60)
-    let m = Math.floor(ms / 60 % 60)
-    let h = Math.floor(ms / 60 / 60)
+    let totalS = ms / 1000
+    let s = Math.floor(totalS % 60)
+    let m = Math.floor(totalS / 60 % 60)
+    let h = Math.floor(totalS / 60 / 60)
 
     if (!h) h = null
     else if (!m) m = '00'
@@ -32,7 +32,9 @@ module.exports = {
 
     let t = [h, m, s].filter(x => x !== null).map((x, i) => (i !== 0 && x < 10 && x !== '00') ? '0' + x : x)
 
-    let decs = (ms % 1).toString().slice(2) + '0'.repeat(16)
+    totalS = totalS.toString()
+    let dot = totalS.indexOf('.')
+    let decs = (dot >= 0 ? totalS.slice(dot + 1) : '') + '0'.repeat(16)
 
     return (invert ? '-' : '') + t.join(':') + (decimals ? '.' + decs.slice(0, decimals) : '')
   },
