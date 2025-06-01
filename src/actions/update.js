@@ -87,29 +87,66 @@ async function records (full) {
 
     let updated = 0
     let demoless = 0
+    let ties = 0
     let wrs = [...activity.map_wrs, ...activity.course_wrs, ...activity.bonus_wrs, ...activity.trick_wrs]
+
+    let items = []
+    let vids = new Set()
+
     for (let i = 0; i < wrs.length; i++) {
       let rec = wrs[i]
       let tfclass = tempus.formatClass(rec.record_info.class)
       let id = rec.record_info.id
       let key = `${tfclass}_${rec.zone_info.id}`
 
-      if (!stores.records[key] || !stores.records[key][id]) { // only update if record is missing / has no demo
-        util.log(`[Records] ${i + 1}/${wrs.length} - ${rec.map_info.name} [${rec.zone_info.type} ${rec.zone_info.zoneindex}]`)
-        let r = await modules.fetch(id, { minimal: true }).catch(() => null)
-        if (!r) {
-          demoless++
-          continue
+      if (!stores.records[key] || !stores.records[key][id]) { // only update if record is not already added
+        let lastId = null
+
+        if (stores.uploads[key]) { // add video id of latest wr in archive to compare duration to
+          lastId = Object.values(stores.uploads[key]).at(-1)
+          if (lastId) {
+            if (lastId.startsWith('#')) lastId = lastId.slice(1) // also consider pending videos in this
+            vids.add(lastId)
+          }
         }
 
-        delete stores.records[key]
-        stores.records.add(key, id, !!r.demo)
-
-        updated++
+        items.push({ key, id, rec, lastId })
       }
     }
-    util.log(`[Records] Updated ${updated}/${wrs.length} records! (${demoless} without demo)\n`)
-    if (updated + demoless === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
+
+    let list = await yt.listVideos(Array.from(vids), null, null)
+    list = list.items.reduce((cur, prev) => {
+      cur[prev.videoId] = util.msFromTime(prev.title.match(/([\d.:]+)$/)[1])
+      return cur
+    }, {})
+
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i]
+      let rec = item.rec
+
+      if (item.lastId) {
+        let dur = item.rec.record_info.duration * 1000
+        if (list[item.lastId] <= dur) {
+          ties++
+          continue
+        }
+      }
+
+      let r = await modules.fetch(item.id, { minimal: true }).catch(() => null)
+      if (!r) {
+        demoless++
+        continue
+      }
+
+      delete stores.records[item.key]
+      stores.records.add(item.key, item.id, !!r.demo)
+      updated++
+
+      util.log(`[Records] ${i + 1}/${items.length} - ${rec.map_info.name} [${rec.zone_info.type} ${rec.zone_info.zoneindex}]`)
+    }
+
+    util.log(`[Records] Updated ${updated}/${wrs.length} records! (No Demo: ${demoless}, Ties: ${ties})\n`)
+    if (updated + demoless + ties === wrs.length) util.log('[Records] <!> All records new, might need to update database fully <!>\n')
 
     await stores.records.export(cfg.records)
   }
