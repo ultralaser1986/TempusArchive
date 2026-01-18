@@ -265,12 +265,20 @@ program
         item.tags = item.tags.map(x => x.value)
         if (!item.tags.find(x => x.startsWith('rid:'))) {
           let id = item.tags.find(x => x.startsWith('ta'))
-          if (!id) throw Error(`No taID found in video tags (${item.videoId})!`)
+          if (!id) {
+            util.log(`[TA_ID NOT FOUND] (${item.videoId}) ${item.title}\n`)
+            continue
+          }
           item.tags.splice(item.tags.indexOf(id), 1)
           id = id.slice(2)
-          let rec = await modules.fetch(id, { minimal: true })
-          if (!rec) throw Error(`Could not find record ${id} on tempus!`)
-
+          let rec = null
+          try {
+            rec = await modules.fetch(id, { minimal: true })
+          } catch(e) {
+            util.log(`[RECORD NOT FOUND] (${item.videoId}) ${item.title}\n`)
+            continue
+          }
+         
           item.tags.push('rid:' + rec.id)
           item.tags.push('zid:' + rec.zone.id)
           item.tags.push('did:' + rec.demo.id)
