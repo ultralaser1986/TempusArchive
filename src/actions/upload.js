@@ -1,4 +1,4 @@
-/* global program, cfg, util, stores, modules, yt */
+/* global program, cfg, util, stores, modules, yt, tr */
 let MEDAL = '[Upload]'
 
 let RETRY = {
@@ -105,6 +105,14 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
     if (pl) tags.push(`pl:${pl}`)
   }
 
+  tags.push('rid:' + rec.id)
+  tags.push('zid:' + rec.zone.id)
+  tags.push('did:' + rec.demo.id)
+  tags.push('tfc:' + rec.class)
+  tags.push('ts:' + rec.time.start)
+  tags.push('te:' + rec.time.end)
+  tags.push('td:' + rec.time.duration)
+
   // load thumbnail
   util.log('Loading thumbnail...')
   let thumbnail = await util.retry(() => modules.thumb(null, null, util.join(rec.dir, rec.files.thumb)), RETRY.fail('making thumbnail'), RETRY.del(vid))
@@ -209,7 +217,9 @@ function captions (file, rec, method, name, style) {
     }
   }
 
-  let styled = lines.length <= cfg.caption_limit_style
+  let styled = false // lines.length <= cfg.caption_limit_style
+  // yt does not support styled subtitles anymore
+
   let reduced = rec.time.duration > cfg.caption_limit_reduced
 
   for (let i = 0; i < lines.length; i++) {
@@ -237,3 +247,68 @@ function captions (file, rec, method, name, style) {
 }
 
 module.exports = { upload: main }
+
+program
+  .command('fixcaptions')
+  .action(async () => {
+    let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PUBLIC' } }
+    let mask = { tags: { all: true } }
+
+    let items = []
+    let next = null
+
+    do {
+      let res = await yt.listVideos(null, { filter, mask }, next)
+      next = res.next
+      util.log(`Fetching Videos: +${res.items.length}\n`)
+      for (let item of res.items) {
+        item.tags = item.tags.map(x => x.value)
+        if (!item.tags.find(x => x.startsWith('rid:'))) {
+          let id = item.tags.find(x => x.startsWith('ta'))
+          if (!id) throw Error(`No taID found in video tags (${item.videoId})!`)
+          item.tags.splice(item.tags.indexOf(id), 1)
+          id = id.slice(2)
+          let rec = await modules.fetch(id, { minimal: true })
+          if (!rec) throw Error(`Could not find record ${id} on tempus!`)
+
+          item.tags.push('rid:' + rec.id)
+          item.tags.push('zid:' + rec.zone.id)
+          item.tags.push('did:' + rec.demo.id)
+          item.tags.push('tfc:' + rec.class)
+          item.tags.push('ts:' + rec.time.start)
+          item.tags.push('te:' + rec.time.end)
+          item.tags.push('td:' + rec.time.duration)
+
+          console.log(modules.display(rec))
+          let mp4 = await modules.recordRaw(rec)
+          let velo = mp4.replace('.mp4', '.velo')
+
+          let captionStyle = 'default'
+
+          util.log('Generating captions...')
+          await util.retry(() => yt.addCaptions(item.videoId, [
+            captions(velo, rec, 0, 'Run Timer', captionStyle),
+            captions(velo, rec, 1, 'Speedo (Horizontal)', captionStyle),
+            captions(velo, rec, 2, 'Speedo (Vertical)', captionStyle),
+            captions(velo, rec, 3, 'Speedo (Absolute)', captionStyle),
+            captions(velo, rec, 4, 'Tick of Demo', captionStyle)
+          ]), RETRY.fail('adding captions'), e => { throw e })
+
+          util.log('Updating video metadata...')
+          await util.retry(() => yt.updateVideo(item.videoId, {
+            tags: { newTags: item.tags }
+          }), RETRY.fail('updating metadata'), e => { throw e })
+
+          util.log('Deleting recording files...')
+          util.remove([mp4.replace('.mp4', '.json'), mp4.replace('.mp4', '.png'), velo, mp4])
+
+          util.log('Done!\n')
+        } else {
+          util.log(`Already applied on (${item.videoId}) ${item.title}\n`)
+        }
+      }
+      items.push(res.items.map(x => x.videoId))
+    } while (next)
+
+    if (tr.app) await tr.exit()
+  })

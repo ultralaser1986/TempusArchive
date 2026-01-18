@@ -365,4 +365,4 @@ async function test (file) {
   return res.stdout.trim() === '1024x1024'
 }
 
-module.exports = { thumb, record: main }
+module.exports = { thumb, record: main, recordRaw: record }
