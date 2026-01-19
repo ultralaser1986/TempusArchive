@@ -277,10 +277,10 @@ program
           let id = item.tags.find(x => x.startsWith('ta'))
           if (!id) {
             id = item.tags.find(x => x.startsWith('rid:'))
-            id = id.slice(4)
+            if (id) id = id.slice(4)
           } else {
             item.tags.splice(item.tags.indexOf(id), 1)
-            id = id.slice(2)
+            if (id) id = id.slice(2)
           }
 
           let rec = null
