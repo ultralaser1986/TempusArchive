@@ -250,7 +250,8 @@ module.exports = { upload: main }
 
 program
   .command('fixcaptions')
-  .action(async () => {
+  .argument('[offset]')
+  .action(async (offset) => {
     let filter = { privacyIs: { value: 'VIDEO_PRIVACY_PUBLIC' } }
     let mask = { tags: { all: true } }
 
@@ -260,25 +261,36 @@ program
     do {
       let res = await yt.listVideos(null, { filter, mask }, next)
       next = res.next
-      util.log(`Fetching Videos: +${res.items.length}\n`)
+
+      let ids = res.items.map(x => x.videoId)
+      items.push(...ids)
+      util.log(`Fetching Videos: +${items.length}\n`)
+
+      if (offset && items.length < offset) continue
+
+      let translations = await yt.getTranslations(ids)
+
       for (let item of res.items) {
         item.tags = item.tags.map(x => x.value)
-        if (!item.tags.find(x => x.startsWith('rid:'))) {
+        let trs = translations.find(x => x.videoId === item.videoId)
+        if (trs.translations.length === 1 || !item.tags.find(x => x.startsWith('rid:'))) {
           let id = item.tags.find(x => x.startsWith('ta'))
           if (!id) {
-            util.log(`[TA_ID NOT FOUND] (${item.videoId}) ${item.title}\n`)
-            continue
+            id = item.tags.find(x => x.startsWith('rid:'))
+            id = id.slice(4)
+          } else {
+            item.tags.splice(item.tags.indexOf(id), 1)
+            id = id.slice(2)
           }
-          item.tags.splice(item.tags.indexOf(id), 1)
-          id = id.slice(2)
+
           let rec = null
           try {
             rec = await modules.fetch(id, { minimal: true })
-          } catch(e) {
+          } catch (e) {
             util.log(`[RECORD NOT FOUND] (${item.videoId}) ${item.title}\n`)
             continue
           }
-         
+
           item.tags.push('rid:' + rec.id)
           item.tags.push('zid:' + rec.zone.id)
           item.tags.push('did:' + rec.demo.id)
@@ -315,7 +327,6 @@ program
           util.log(`Already applied on (${item.videoId}) ${item.title}\n`)
         }
       }
-      items.push(res.items.map(x => x.videoId))
     } while (next)
 
     if (tr.app) await tr.exit()

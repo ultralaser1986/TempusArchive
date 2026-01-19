@@ -251,6 +251,27 @@ YouTube.prototype.listVideos = async function (vids, opts, next) {
   }
 }
 
+YouTube.prototype.getTranslations = async function (vids) {
+  if (!vids || !Array.isArray(vids)) vids = []
+  let body = await dp.post('https://studio.youtube.com/youtubei/v1/crowdsourcing/get_video_translations', {
+    query: {
+      alt: 'json',
+      key: INNERTUBE_KEY
+    },
+    headers: {
+      'x-origin': 'https://studio.youtube.com',
+      cookie: this.keys.cookies,
+      Authorization: this.keys.authorization
+    },
+    data: {
+      videoIds: vids,
+      context: this.context()
+    },
+    type: 'json'
+  }).json()
+  return body.videoTranslations
+}
+
 YouTube.prototype.deleteVideos = async function (ids) {
   if (!Array.isArray(ids)) ids = [ids]
   try {
