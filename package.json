@@ -18,7 +18,7 @@
   "dependencies": {
     "commander": "^9.4.0",
     "despair": "^2.1.2",
-    "temrec": "^4.1.0"
+    "temrec": "^4.2.0"
   },
   "os": [
     "win32"
