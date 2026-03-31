@@ -25,3 +25,13 @@ nick.command('set')
 
     await stores.players.export()
   })
+
+nick.command('rm')
+  .description('remove nickname for player by steam id')
+  .argument('id', 'steam id')
+  .action(async (id) => {
+    if (!stores.players[id]) return console.log('Steam id not nicknamed.')
+    console.log(`Removed nick: ${id} ${stores.players[id]}`)
+    delete stores.players[id]
+    await stores.players.export()
+  })
