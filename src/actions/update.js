@@ -275,7 +275,7 @@ async function uploads (verbose) {
         let pwr = ups[i - 1]
         let match = description.match('https://youtu.be/' + pwr)
         if (!match) status.update[vid] = pwr
-      } else if (ups.length === 1) {
+      } else if (ups.length === 1 || i == 0) {
         if (description.match('https://youtu.be/')) status.update[vid] = ''
       }
     }
