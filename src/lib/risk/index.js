@@ -1,23 +1,24 @@
-let puppeteer = require('puppeteer-extra')
-puppeteer.use(require('puppeteer-extra-plugin-stealth')())
+let { Camoufox } = require('camoufox')
 
 async function getSessionRisk (keys) {
-  let cookies = Object.entries(keys.cookies).map(x => {
-    return { name: x[0], value: x[1], domain: '.youtube.com' }
-  })
+  let browser = await Camoufox({ headless: true })
+  let context = await browser.newContext()
 
-  let browser = await puppeteer.launch({ headless: true })
-  let page = await browser.newPage()
+  let cookies = Object.entries(keys.cookies).map(x => { return { name: x[0], value: x[1], domain: '.youtube.com', path: '/', secure: true, httpOnly: true } })
+  await context.addCookies(cookies)
 
-  await page.setCookie(...cookies)
+  let page = await context.newPage()
 
-  await page.setRequestInterception(true)
+  let token = new Promise(resolve => {
+    page.route('**/*', async (route) => {
+      let req = route.request()
 
-  let res = new Promise(resolve => {
-    page.on('request', req => {
-      req.continue()
+      let url = req.url()
       let data = req.postData()
-      if (data) {
+
+      await route.continue()
+
+      if (url.indexOf('/youtubei/v1/channel_edit/update_channel_page_settings') !== -1) {
         try {
           data = JSON.parse(data).context?.request?.sessionInfo?.token
           if (data && data.length > 25) resolve(data)
@@ -26,31 +27,24 @@ async function getSessionRisk (keys) {
     })
   })
 
-  await page.goto(`https://studio.youtube.com/channel/${keys.channelId || 'my'}/editing/details`)
+  let channelId = keys.channelId || 'my'
+  await page.goto(`https://studio.youtube.com/channel/${channelId}/editing/details`, { waitUntil: 'domcontentloaded' })
 
-  try { await page.waitForSelector('#textbox') } catch (e) { }
+  await page.waitForSelector('#textbox', { timeout: 10000 })
 
-  let txt = await page.evaluate(() => {
-    let box = document.getElementById('textbox')
-    box.focus()
-    return box.innerText
-  })
-
-  let take = txt.at(-2) === ' '
-
-  await page.keyboard.down('Control')
-  await page.keyboard.press('a')
-  await page.keyboard.up('Control')
+  let text = await page.locator('#textbox').innerText()
+  let take = text.at(-2) === ' '
+  await page.locator('#textbox').click()
+  await page.keyboard.press('Control+A')
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press(take ? 'Backspace' : 'Space')
+  await page.locator('#publish-button').click()
 
-  await page.evaluate(() => document.getElementById('publish-button').click())
-
-  res = await Promise.resolve(res)
+  let result = await token
 
   await browser.close()
 
-  return res
+  return result
 }
 
 module.exports = getSessionRisk
