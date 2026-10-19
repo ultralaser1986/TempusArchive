@@ -217,8 +217,7 @@ function captions (file, rec, method, name, style) {
     }
   }
 
-  let styled = false // lines.length <= cfg.caption_limit_style
-  // yt does not support styled subtitles anymore
+  let styled = lines.length <= cfg.caption_limit_style
 
   let reduced = rec.time.duration > cfg.caption_limit_reduced
 
