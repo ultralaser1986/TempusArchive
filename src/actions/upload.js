@@ -117,13 +117,24 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   util.log('Loading thumbnail...')
   let thumbnail = await util.retry(() => modules.thumb(null, null, util.join(rec.dir, rec.files.thumb)), RETRY.fail('making thumbnail'), RETRY.del(vid))
 
+  let text = desc(rec, override)
+
+  let velo = util.join(rec.dir, rec.files.velo)
+
+  // add level chapters to desc
+  if (util.exists(velo)) {
+    util.log('Adding chapters...')
+    let chaps = chapters(velo, rec)
+    if (chaps && chaps.length) text += '\n\n' + chaps.join('\n')
+  }
+
   // update video metadata
   util.log('Updating video metadata...')
   await util.retry(() => yt.updateVideo(vid, {
     draftState: { operation: 'MDE_DRAFT_STATE_UPDATE_OPERATION_REMOVE_DRAFT_STATE' },
     privacyState: { newPrivacy: hidden ? 'UNLISTED' : 'PRIVATE' },
     title: { newTitle: (hidden ? cfg.prefix.hidden : cfg.prefix.pending) + ' ' + title(rec) },
-    description: { newDescription: desc(rec, override) },
+    description: { newDescription: text },
     category: { newCategoryId: cfg.meta.category },
     tags: { newTags: tags },
     videoStill: { operation: 'UPLOAD_CUSTOM_THUMBNAIL', image: { dataUri: thumbnail } },
@@ -131,8 +142,6 @@ async function upload (rec, captionStyle = 'default', hidden = false) {
   }), RETRY.fail('updating metadata'), RETRY.del(vid))
 
   // add captions to video
-  let velo = util.join(rec.dir, rec.files.velo)
-
   if (util.exists(velo)) {
     // captions over 13min~ wont have styling
     // captions over 1h50min~ break, so we half their fps
@@ -243,6 +252,98 @@ function captions (file, rec, method, name, style) {
   else res.segments = parts
 
   return res
+}
+
+function chapters (file, rec) {
+  let levelzones = JSON.parse(util.read(cfg.levelzones))
+  if (!levelzones[rec.map]) return null
+
+  let chapters = []
+
+  let velo = util.read(file, 'utf-8').split(/\r?\n/)
+
+  let index = 0
+  let course = 0
+  let globalLevel = 1
+  let lz = levelzones[rec.map].reduce((acc, cur) => {
+    let multi = Array.isArray(cur)
+    if (multi) course++
+    else cur = [cur]
+    let level = 1
+    for (let c of cur) {
+      let boxes = c.split(',')
+      for (let box of boxes) {
+        let check = false
+        if (box.startsWith('!')) {
+          box = box.slice(1)
+          check = true
+        }
+        let [x1, y1, z1, x2, y2, z2] = box.split(' ').map(Number)
+        acc.push({
+          check,
+          index,
+          course: multi ? course : null,
+          level: multi ? level : globalLevel,
+          mins: { x: Math.min(x1, x2), y: Math.min(y1, y2), z: Math.min(z1, z2) },
+          maxs: { x: Math.max(x1, x2), y: Math.max(y1, y2), z: Math.max(z1, z2) }
+        })
+      }
+      globalLevel++
+      level++
+      index++
+    }
+
+    return acc
+  }, [])
+
+  chapters.push('0:00 Start')
+
+  let prevPos = null
+
+  let prevBox = null
+
+  let within = (p, min, max) => p >= min && p <= max
+  let inside = (boxes, p1, p2) => {
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      let box = boxes[i]
+      if (['x', 'y', 'z'].every(axis =>
+        within(p1[axis], box.mins[axis], box.maxs[axis]) || within(p2[axis], box.mins[axis], box.maxs[axis]) ||
+        (Math.min(p1[axis], p2[axis]) <= box.maxs[axis] && Math.max(p1[axis], p2[axis]) >= box.mins[axis])
+      )) {
+        // If within a course and not last item of that course, prevent it from matching other zones
+        if (prevBox?.course && prevBox.course !== box.course && (!boxes[i + 1] || boxes[i + 1].level > box.level)) continue
+        return box
+      }
+    }
+    return null
+  }
+
+  for (let line of velo) {
+    if (!line) break
+    let [tick, , , , x, y, z] = line.split(' ').map(Number)
+    if (tick < rec.time.start - cfg.padding / 2) continue
+    if (tick > rec.time.end) break
+
+    if (prevPos) {
+      let box = inside(lz, { x, y, z: z + 40 }, prevPos)
+      if (box) {
+        prevBox = box
+        lz = lz.filter(x => x.index !== box.index)
+        if (box.check) continue
+
+        let chapter = util.formatTime((tick - rec.time.start + cfg.padding) / (200 / 3) * 1000, 0)
+        if (box.course) chapter += ' Course ' + box.course
+        if (box.level) chapter += ' Level ' + box.level
+        chapters.push(chapter)
+      }
+    }
+
+    prevPos = { x, y, z: z + 40 }
+  }
+
+  chapters.push(util.formatTime((rec.time.end - rec.time.start + cfg.padding) / (200 / 3) * 1000, 0) + ' Finish')
+
+  return chapters
 }
 
 module.exports = { upload: main }
