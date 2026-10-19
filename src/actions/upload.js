@@ -272,7 +272,7 @@ program
       for (let item of res.items) {
         item.tags = item.tags.map(x => x.value)
         let trs = translations.find(x => x.videoId === item.videoId)
-        if (trs.translations.length === 1 || !item.tags.find(x => x.startsWith('rid:'))) {
+        if (trs.translations.length < 3 || !item.tags.find(x => x.startsWith('rid:'))) {
           let id = item.tags.find(x => x.startsWith('ta'))
           if (!id) {
             id = item.tags.find(x => x.startsWith('rid:'))
