@@ -5,11 +5,11 @@ let tempus = require('../tempus')
 program
   .command('update')
   .description('update databases')
-  .argument('[types...]', 'database types to update (players/records/uploads)')
+  .argument('[types...]', 'database types to update (records/uploads)')
   .option('-f, --full', 'full update')
   .option('-v, --verbose', 'verbose output')
   .action(async (types, opts) => {
-    if (!types.length) types = ['players', 'records', 'uploads']
+    if (!types.length) types = ['records', 'uploads']
 
     types = types.reduce((obj, item) => {
       obj[item] = true
@@ -19,26 +19,9 @@ program
     await update(types, opts)
   })
 
-async function update (types = { players: true, records: true, uploads: true }, opts) {
-  if (types.players) await players()
+async function update (types = { records: true, uploads: true }, opts) {
   if (types.records) await records(opts.full)
   if (types.uploads) await uploads(opts.verbose)
-}
-
-async function players () {
-  let num = 0
-  util.log('[Players] Fetching data...')
-  let nicknames = await dp(cfg.nickdata).json()
-  for (let nick of nicknames) {
-    let id = util.formatSteamID(nick.steamId)
-    if (!stores.players[id]) {
-      stores.players[id] = { [nick.name]: true }
-      num++
-    }
-  }
-  util.log(`[Players] Added ${num} additional nickname${util.s(num)}! (${Object.keys(stores.players).length} total)\n`)
-
-  await stores.players.export(cfg.players)
 }
 
 async function records (full) {
