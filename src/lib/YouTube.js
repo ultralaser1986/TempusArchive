@@ -65,7 +65,10 @@ function YouTube (keyfile) {
 }
 
 YouTube.prototype.updateSession = async function () {
-  let check = await this.updateVideo('00000000000').catch(e => e.code === 403)
+  let vids = await this.listVideos(null, { limit: 1, reverse: true })
+  if (!vids.items.length) return null
+
+  let check = await this.updateVideo(vids.items[0].videoId).catch(e => e.code === 403)
   if (check === false) {
     let keys = JSON.parse(fs.readFileSync(this.file))
     this.keys.session = keys.sessionInfo = await risk(keys)
@@ -222,7 +225,7 @@ YouTube.prototype.listVideos = async function (vids, opts, next) {
       Authorization: this.keys.authorization
     },
     data: {
-      pageSize: 100,
+      pageSize: opts.limit || 100,
       mask: {
         title: true,
         description: true,
@@ -230,6 +233,7 @@ YouTube.prototype.listVideos = async function (vids, opts, next) {
         timeCreatedSeconds: true,
         ...opts.mask
       },
+      order: opts.reverse ? 'VIDEO_ORDER_DISPLAY_TIME_ASC' : 'VIDEO_ORDER_DISPLAY_TIME_DESC',
       filter: opts.filter,
       videoIds: vids,
       pageToken: next,
